@@ -30,4 +30,7 @@
       Search.open();
     }
   });
+
+  // Init gestures
+  Gestures.init();
 })();

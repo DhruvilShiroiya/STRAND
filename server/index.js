@@ -10,12 +10,31 @@ const app = express();
 const PORT = process.env.PORT || config.appPort || 3000;
 
 // ── MIDDLEWARE ──
-app.use(cors());
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000'
+];
+if (process.env.ALLOWED_ORIGIN) {
+  allowedOrigins.push(...process.env.ALLOWED_ORIGIN.split(','));
+}
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ── SERVE FRONTEND ──
-app.use(express.static(path.join(__dirname, '..', 'frontend')));
+app.use(express.static(path.join(__dirname, '..', 'frontend'), {
+  etag: false,
+  lastModified: false,
+  setHeaders: (res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+}));
 
 // ── DRIVE STATUS CHECK (runs on boot) ──
 function checkDrives() {

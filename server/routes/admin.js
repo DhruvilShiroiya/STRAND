@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const bcrypt = require('bcrypt');
 const fs = require('fs');
+const path = require('path');
 const db = require('../db');
 const auth = require('../middleware/auth');
 const adminOnly = require('../middleware/adminOnly');
@@ -304,6 +305,16 @@ router.get('/usage', (req, res) => {
   }
 
   res.json(results);
+});
+
+// ── GET /api/admin/setup-guide ──
+router.get('/setup-guide', (req, res) => {
+  try {
+    const setupContent = fs.readFileSync(path.join(__dirname, '..', '..', 'SETUP.md'), 'utf8');
+    res.json({ content: setupContent });
+  } catch (err) {
+    res.status(500).json({ error: 'Could not read setup guide' });
+  }
 });
 
 module.exports = router;

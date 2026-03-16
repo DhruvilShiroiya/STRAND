@@ -1,9 +1,14 @@
+const API_BASE = (typeof CONFIG !== 'undefined' && CONFIG.API_BASE) ? CONFIG.API_BASE : '';
+
 // ══════════════════════════════
 // AUTH STATE
 // ══════════════════════════════
+const _token = sessionStorage.getItem('strand_token') || localStorage.getItem('strand_token');
+const _user  = sessionStorage.getItem('strand_user')  || localStorage.getItem('strand_user');
+
 const Auth = {
-  token: sessionStorage.getItem('strand_token'),
-  user:  JSON.parse(sessionStorage.getItem('strand_user') || 'null'),
+  token: _token,
+  user:  _user ? JSON.parse(_user) : null,
 
   check() {
     if (!this.token) {
@@ -16,6 +21,8 @@ const Auth = {
   clear() {
     sessionStorage.removeItem('strand_token');
     sessionStorage.removeItem('strand_user');
+    localStorage.removeItem('strand_token');
+    localStorage.removeItem('strand_user');
     this.token = null;
     this.user  = null;
   }
@@ -38,7 +45,7 @@ const API = {
       opts.body = JSON.stringify(body);
     }
 
-    const res  = await fetch('/api' + path, opts);
+    const res  = await fetch(API_BASE + '/api' + path, opts);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Request failed');
     return data;
@@ -51,7 +58,7 @@ const API = {
 
   // Direct download via link (needs token in query for browser download)
   downloadUrl(filePath) {
-    return '/api/files/download?path=' + encodeURIComponent(filePath)
+    return API_BASE + '/api/files/download?path=' + encodeURIComponent(filePath)
          + '&token=' + encodeURIComponent(Auth.token);
   }
 };

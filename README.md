@@ -1,33 +1,81 @@
-Strand is a self-hosted web app that turns your external hard drives into a 
-personal cloud — accessible from any device, anywhere, through a secure tunnel.
+# STRAND
+### Local storage, without the local.
 
-Unlike Dropbox, Google Drive, or iCloud, Strand stores your files on drives 
-you physically own. Nothing leaves your hardware. No subscriptions, no storage 
-limits imposed by a third party, no data sitting on someone else's server.
+---
 
-You run Strand on your Mac, plug in your drives, and instantly get a clean 
-web interface to upload, browse, download, and manage files — from your phone, 
-laptop, or any browser in the world.
+Strand is a self-hosted file storage system that runs on your own hardware. Files live on your external drive. Access them from anywhere via a secure Cloudflare tunnel. No cloud. No subscriptions. No data leaving your home.
 
-Built for small groups. Each user gets their own folder and quota on the drive. 
-An admin panel lets you manage users, set storage limits, and monitor usage. 
-Drives are hot-swappable — go offline, swap the drive, come back online.
+---
 
-Features
-- Clean, typographic UI — light/dark auto theme, no icons, no clutter
-- Real file storage on your own external drives
-- Multi-user with per-user quotas and storage warnings
-- File preview — PDFs, images, video, audio, text directly in the browser
-- Drag and drop upload with live progress
-- Folder navigation with breadcrumbs
-- Secure remote access via Cloudflare Tunnel — free, no port forwarding
-- JWT authentication, bcrypt passwords
-- Zero cloud dependency — works entirely on your local network too
+## Stack
 
-Stack: Node.js · Express · SQLite · Multer · JWT · Cloudflare Tunnel
+| Layer | Technology |
+|---|---|
+| Runtime | Node.js 23 |
+| Framework | Express 5 |
+| Database | SQLite (better-sqlite3) |
+| Auth | JWT + bcrypt |
+| Uploads | Multer |
+| Tunnel | Cloudflare Tunnel |
+| Frontend | Vanilla JS, CSS custom properties |
+| Typography | Cormorant · DM Mono · Figtree |
 
-Why Strand?
-Most self-hosted solutions (Nextcloud, Seafile, Plex) are heavy — 
-they require Docker, databases, complex setup, and still push you 
-toward cloud sync. Strand is the opposite. No Docker. No sync. 
-No monthly fee. Just your drives, your files, and a URL.
+---
+
+## Structure
+
+```
+STRAND/
+├── server/
+│   ├── routes/
+│   │   ├── auth.js        — login, logout, /me
+│   │   ├── files.js       — list, upload, download, delete, mkdir, rename
+│   │   └── admin.js       — user management, drive management, usage
+│   ├── middleware/
+│   │   ├── auth.js        — JWT verification
+│   │   └── adminOnly.js   — localhost + admin role guard
+│   ├── utils/
+│   │   ├── driveUtils.js  — path safety, folder size, drive stats
+│   │   └── quotaUtils.js  — usage cache, quota checks
+│   ├── db.js              — SQLite schema + seed
+│   ├── seed.js            — first admin user
+│   └── index.js           — Express entry point
+├── frontend/
+│   ├── css/strand.css
+│   ├── js/
+│   │   ├── api.js         — fetch wrapper, auth state
+│   │   ├── app.js         — boot
+│   │   ├── folder.js      — folder nav, file list, breadcrumbs
+│   │   ├── upload.js      — drag drop, queue, progress
+│   │   ├── profile.js     — storage bar, settings, setup guide
+│   │   ├── search.js      — full-text file search
+│   │   ├── nav.js         — pill nav, responsive switching
+│   │   ├── preview.js     — inline file preview
+│   │   ├── gestures.js    — swipe back, swipe to dismiss
+│   │   └── config.js      — API base URL
+│   ├── index.html         — login
+│   └── app.html           — main app
+├── data/
+│   └── strand.db          — SQLite database
+├── config.json            — drive paths, port, quota thresholds
+├── .env                   — JWT secret, port, node env
+└── README.md
+```
+
+---
+
+## Design
+
+Strand uses a strict typographic hierarchy with no icons or decorative elements.
+
+- **Display** — Cormorant (serif) — page titles, wordmark, headings
+- **Data** — DM Mono (monospace) — labels, sizes, timestamps, navigation
+- **Body** — Figtree (sans-serif) — prose, inputs
+
+Themes follow the device preference via `prefers-color-scheme`. Warm cream in light mode, rich near-black in dark mode.
+
+---
+
+## License
+
+Personal use. Not for redistribution.

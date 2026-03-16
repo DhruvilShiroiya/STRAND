@@ -60,6 +60,10 @@ const Profile = {
         <div class="setting-row" onclick="Profile.driveSettings()">
           <span class="sr-label">Drive settings</span>
           <span class="sr-arrow">›</span>
+        </div>
+        <div class="setting-row" onclick="Profile.openSetupGuide()">
+          <span class="sr-label">Setup guide</span>
+          <span class="sr-arrow">›</span>
         </div>` : '';
 
       // ── Drives section HTML (admin only) ──
@@ -482,14 +486,28 @@ const Profile = {
   },
 
   // ── Add a memory snapshot ──
-  async addMemory(containerId) {
-    const title = prompt('Memory title (e.g. "Before holiday backup"):');
+  addMemory(containerId) {
+    Profile._currentContainerId = containerId;
+    document.getElementById('memorySheetOverlay').classList.add('show');
+    setTimeout(() => document.getElementById('memoryTitleInput').focus(), 220);
+  },
+
+  closeMemorySheet() {
+    document.getElementById('memorySheetOverlay').classList.remove('show');
+    document.getElementById('memoryTitleInput').value = '';
+    document.getElementById('memoryNoteInput').value = '';
+  },
+
+  async saveMemory() {
+    const title = document.getElementById('memoryTitleInput').value.trim();
+    const note  = document.getElementById('memoryNoteInput').value.trim();
     if (!title) return;
-    const note = prompt('Optional note:');
+
     try {
       await API.post('/files/memories', { title, note });
+      this.closeMemorySheet();
       Toast.show('Memory saved');
-      this.render(containerId);
+      this.render(Profile._currentContainerId || 'dProfileInner');
     } catch (err) {
       Toast.error(err.message);
     }
@@ -551,20 +569,14 @@ const Profile = {
                   font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.06em;
                   text-transform:uppercase;cursor:pointer;
                   background:var(--bg3);color:var(--ink);
-                  border:1px solid var(--line);border-radius:7px;
+                  border:1px solid var(--line);border-radius:99px;
                   transition:all 0.15s;"
                 onmouseover="this.style.borderColor='var(--ink3)'"
                 onmouseout="this.style.borderColor='var(--line)'">
                 Change path
               </button>
             </div>`).join('')}
-          <button onclick="document.getElementById('ds-overlay').remove()" style="
-            width:100%;margin-top:20px;padding:14px;
-            background:var(--bg3);color:var(--ink);
-            border:none;border-radius:9px;
-            font-family:'Figtree',sans-serif;font-size:15px;font-weight:600;
-            cursor:pointer;
-          ">Done</button>
+          <button onclick="document.getElementById('ds-overlay').remove()" class="sheet-cta" style="margin-top:20px;">Done</button>
         </div>`;
       ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
       document.body.appendChild(ov);
@@ -611,7 +623,7 @@ const Profile = {
         <div style="display:flex;gap:10px;">
           <button onclick="document.getElementById('cdp-sheet').remove()" style="
             flex:1;padding:15px;background:var(--bg3);color:var(--ink);
-            border:none;border-radius:9px;font-family:'Figtree',sans-serif;
+            border:none;border-radius:99px;font-family:'Figtree',sans-serif;
             font-size:15px;font-weight:600;cursor:pointer;
           ">Cancel</button>
           <button id="cdp-save-btn" class="sheet-cta" style="flex:2;"
@@ -652,16 +664,159 @@ const Profile = {
     }
   },
 
-  async changePassword() {
-    const p = prompt('New password (min 8 characters):');
-    if (!p) return;
-    if (p.length < 8) { Toast.error('Password must be at least 8 characters'); return; }
+  // ── Change password ──
+  changePassword() {
+    document.getElementById('passwordSheetOverlay').classList.add('show');
+    setTimeout(() => document.getElementById('currentPasswordInput').focus(), 220);
+  },
+
+  closePasswordSheet() {
+    document.getElementById('passwordSheetOverlay').classList.remove('show');
+    document.getElementById('currentPasswordInput').value = '';
+    document.getElementById('newPasswordInput').value = '';
+    document.getElementById('confirmPasswordInput').value = '';
+  },
+
+  async savePassword() {
+    const cur = document.getElementById('currentPasswordInput').value;
+    const p1  = document.getElementById('newPasswordInput').value;
+    const p2  = document.getElementById('confirmPasswordInput').value;
+
+    if (!cur) { Toast.error('Current password required'); return; }
+    if (!p1) return;
+    if (p1.length < 8) { Toast.error('Password must be at least 8 characters'); return; }
+    if (p1 !== p2) { Toast.error('Passwords do not match'); return; }
+
     try {
-      await API.put('/admin/users/' + Auth.user.id, { password: p });
+      await API.put('/auth/password', { currentPassword: cur, newPassword: p1 });
+      this.closePasswordSheet();
       Toast.show('Password updated');
     } catch (err) {
       Toast.error(err.message);
     }
+  },
+
+  async openSetupGuide() {
+    document.getElementById('sg-overlay')?.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'sg-overlay';
+    overlay.style.cssText = `
+      position:fixed;inset:0;z-index:300;
+      background:var(--bg);
+      display:flex;flex-direction:column;
+      animation:fadeUp 0.22s var(--ease) both;
+    `;
+
+    overlay.innerHTML = `
+      <header style="
+        position:sticky;top:0;z-index:10;
+        height:60px;display:flex;align-items:center;gap:14px;
+        padding:0 28px;
+        background:var(--bg);
+        border-bottom:1px solid var(--line);
+        flex-shrink:0;
+      ">
+        <button onclick="document.getElementById('sg-overlay').remove()" style="
+          font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.06em;
+          text-transform:uppercase;color:var(--ink3);
+          background:none;border:none;cursor:pointer;padding:0;
+          transition:color 0.15s;
+        " onmouseover="this.style.color='var(--ink)'" onmouseout="this.style.color='var(--ink3)'">← Back</button>
+        <span style="
+          font-family:'Cormorant',serif;font-size:22px;font-weight:400;
+          letter-spacing:0.02em;flex:1;
+        ">Setup Guide</span>
+      </header>
+
+      <div style="flex:1;overflow-y:auto;scrollbar-width:none;padding-bottom:80px;">
+        <div style="max-width:640px;margin:0 auto;">
+
+          <div style="padding:32px 28px 8px;">
+            <div style="font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.12em;color:var(--ink3);margin-bottom:10px;">Admin</div>
+            <div style="font-family:'Cormorant',serif;font-size:48px;font-weight:400;line-height:1;letter-spacing:-0.5px;">Setup Guide</div>
+            <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--ink3);margin-top:12px;letter-spacing:0.04em;line-height:1.6;">Follow these steps to configure and deploy your Strand instance.</div>
+          </div>
+
+          <div style="height:1px;background:var(--line);margin:24px 0 0;"></div>
+
+          <!-- Section 1 -->
+          <div style="padding:28px 28px 0;">
+            <div style="font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.12em;color:var(--ink3);margin-bottom:14px;">01 — Database</div>
+            <div style="font-family:'Cormorant',serif;font-size:28px;font-weight:400;margin-bottom:10px;">Core Database</div>
+            <div style="font-size:14px;color:var(--ink2);line-height:1.6;margin-bottom:20px;">Strand uses SQLite with WAL mode for lightweight, high-performance local storage. The database initializes automatically on first run.</div>
+            <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;overflow:hidden;">
+              <div style="padding:14px 18px;border-bottom:1px solid var(--line2);">
+                <div style="font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink3);">Verification checklist</div>
+              </div>
+              <div style="padding:16px 18px;display:flex;flex-direction:column;gap:10px;">
+                <div style="display:flex;align-items:center;gap:12px;font-size:13px;">
+                  <div style="width:4px;height:4px;border-radius:50%;background:var(--ink4);flex-shrink:0;"></div>
+                  <span>Check <code style="font-family:'DM Mono',monospace;font-size:11px;background:var(--bg3);padding:2px 6px;border-radius:4px;">data/strand.db</code> exists in root</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;font-size:13px;">
+                  <div style="width:4px;height:4px;border-radius:50%;background:var(--ink4);flex-shrink:0;"></div>
+                  <span>Verify <code style="font-family:'DM Mono',monospace;font-size:11px;background:var(--bg3);padding:2px 6px;border-radius:4px;">config.json</code> drive paths are valid</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;font-size:13px;">
+                  <div style="width:4px;height:4px;border-radius:50%;background:var(--ink4);flex-shrink:0;"></div>
+                  <span>DB auto-initializes on <code style="font-family:'DM Mono',monospace;font-size:11px;background:var(--bg3);padding:2px 6px;border-radius:4px;">npm run dev</code></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="height:1px;background:var(--line2);margin:32px 0 0;"></div>
+
+          <!-- Section 2 -->
+          <div style="padding:28px 28px 0;">
+            <div style="font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.12em;color:var(--ink3);margin-bottom:14px;">02 — Tunnel</div>
+            <div style="font-family:'Cormorant',serif;font-size:28px;font-weight:400;margin-bottom:10px;">Cloudflare Tunnel</div>
+            <div style="font-size:14px;color:var(--ink2);line-height:1.6;margin-bottom:20px;">Expose your local instance to your custom domain securely without opening firewall ports.</div>
+
+            <div style="display:flex;flex-direction:column;gap:2px;">
+              <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px 12px 4px 4px;overflow:hidden;">
+                <div style="padding:14px 18px;border-bottom:1px solid var(--line2);display:flex;align-items:center;justify-content:space-between;">
+                  <div style="font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink3);">Step 1 — Authentication</div>
+                </div>
+                <pre style="margin:0;padding:16px 18px;font-family:'DM Mono',monospace;font-size:12px;color:var(--ink);background:transparent;overflow-x:auto;white-space:pre-wrap;">cloudflared tunnel login</pre>
+              </div>
+
+              <div style="background:var(--bg2);border:1px solid var(--line);border-radius:4px;overflow:hidden;">
+                <div style="padding:14px 18px;border-bottom:1px solid var(--line2);">
+                  <div style="font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink3);">Step 2 — Create Tunnel</div>
+                </div>
+                <pre style="margin:0;padding:16px 18px;font-family:'DM Mono',monospace;font-size:12px;color:var(--ink);background:transparent;overflow-x:auto;white-space:pre-wrap;">cloudflared tunnel create strand</pre>
+              </div>
+
+              <div style="background:var(--bg2);border:1px solid var(--line);border-radius:4px 4px 12px 12px;overflow:hidden;">
+                <div style="padding:14px 18px;border-bottom:1px solid var(--line2);">
+                  <div style="font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink3);">Step 3 — Route DNS</div>
+                </div>
+                <pre style="margin:0;padding:16px 18px;font-family:'DM Mono',monospace;font-size:12px;color:var(--ink);background:transparent;overflow-x:auto;white-space:pre-wrap;">cloudflared tunnel route dns strand yourdomain.com</pre>
+              </div>
+            </div>
+          </div>
+
+          <div style="height:1px;background:var(--line2);margin:32px 0 0;"></div>
+
+          <!-- Section 3 -->
+          <div style="padding:28px 28px 0;">
+            <div style="font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.12em;color:var(--ink3);margin-bottom:14px;">03 — Environment</div>
+            <div style="font-family:'Cormorant',serif;font-size:28px;font-weight:400;margin-bottom:10px;">Public Integration</div>
+            <div style="font-size:14px;color:var(--ink2);line-height:1.6;margin-bottom:20px;">Update your <code style="font-family:'DM Mono',monospace;font-size:12px;background:var(--bg3);padding:2px 6px;border-radius:4px;">.env</code> file to allow requests from your public domain.</div>
+            <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;overflow:hidden;">
+              <div style="padding:14px 18px;border-bottom:1px solid var(--line2);">
+                <div style="font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink3);">.env</div>
+              </div>
+              <pre style="margin:0;padding:16px 18px;font-family:'DM Mono',monospace;font-size:12px;color:var(--ink);background:transparent;white-space:pre-wrap;">ALLOWED_ORIGIN=https://yourdomain.com</pre>
+            </div>
+          </div>
+
+        </div>
+      </div>`;
+
+    document.body.appendChild(overlay);
   },
 
   async signOut() {
@@ -670,3 +825,12 @@ const Profile = {
     window.location.href = '/';
   }
 };
+
+// Enter key on memory inputs
+document.getElementById('memoryTitleInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') Profile.saveMemory(); });
+document.getElementById('memoryNoteInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') Profile.saveMemory(); });
+
+// Enter key on password inputs
+document.getElementById('currentPasswordInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('newPasswordInput').focus(); });
+document.getElementById('newPasswordInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('confirmPasswordInput').focus(); });
+document.getElementById('confirmPasswordInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') Profile.savePassword(); });

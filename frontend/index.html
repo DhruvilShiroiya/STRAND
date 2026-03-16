@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Strand</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;1,400;1,500&family=DM+Mono:wght@400;500&family=Figtree:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/strand.css">
+<link rel="stylesheet" href="/css/strand.css?v=1710600000">
 <style>
   .login-wrap {
     min-height: 100dvh;
@@ -60,6 +60,25 @@
     color: var(--red); margin-top: 12px; display: none;
   }
   .login-error.show { display: block; }
+  .login-remember {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 24px;
+  }
+  .login-remember label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--ink3);
+    cursor: pointer;
+  }
+  .pw-wrap { position: relative; }
+  .pw-toggle {
+    position: absolute; right: 0; top: 0;
+    background: none; border: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--ink3);
+    cursor: pointer; padding: 10px 0;
+  }
 </style>
 </head>
 <body>
@@ -74,20 +93,37 @@
       autocomplete="username" autocapitalize="none">
 
     <label class="login-label">Password</label>
-    <input class="login-input" type="password" id="loginPassword"
-      placeholder="••••••••"
-      autocomplete="current-password">
+    <div class="pw-wrap">
+      <input class="login-input" type="password" id="loginPassword"
+        placeholder="••••••••"
+        autocomplete="current-password">
+      <button class="pw-toggle" type="button" onclick="togglePw()">Show</button>
+    </div>
+
+    <div class="login-remember">
+      <input type="checkbox" id="rememberMe">
+      <label for="rememberMe">Remember me</label>
+    </div>
 
     <button class="login-btn" id="loginBtn" onclick="login()">Sign in</button>
     <div class="login-error" id="loginError"></div>
   </div>
 </div>
 
+<script src="/js/config.js?v=1710600000"></script>
 <script>
   document.getElementById('loginPassword')
     .addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
   document.getElementById('loginUsername')
     .addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
+
+  function togglePw() {
+    const input = document.getElementById('loginPassword');
+    const btn   = event.currentTarget;
+    const isPw  = input.type === 'password';
+    input.type  = isPw ? 'text' : 'password';
+    btn.textContent = isPw ? 'Hide' : 'Show';
+  }
 
   async function login() {
     const username = document.getElementById('loginUsername').value.trim();
@@ -113,9 +149,18 @@
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Login failed');
 
-      // Store token in sessionStorage and redirect
-      sessionStorage.setItem('strand_token', data.token);
-      sessionStorage.setItem('strand_user',  JSON.stringify(data.user));
+      // Store token and redirect
+      if (document.getElementById('rememberMe').checked) {
+        localStorage.setItem('strand_token', data.token);
+        localStorage.setItem('strand_user',  JSON.stringify(data.user));
+        sessionStorage.removeItem('strand_token');
+        sessionStorage.removeItem('strand_user');
+      } else {
+        sessionStorage.setItem('strand_token', data.token);
+        sessionStorage.setItem('strand_user',  JSON.stringify(data.user));
+        localStorage.removeItem('strand_token');
+        localStorage.removeItem('strand_user');
+      }
       window.location.href = '/app.html';
 
     } catch (err) {
@@ -128,12 +173,12 @@
 
   function showError(msg) {
     const el = document.getElementById('loginError');
+    if (!el) return;
     el.textContent = msg;
     el.classList.add('show');
   }
 
-  // Redirect to app if already logged in
-  const existingToken = sessionStorage.getItem('strand_token');
+  const existingToken = sessionStorage.getItem('strand_token') || localStorage.getItem('strand_token');
   if (existingToken) window.location.href = '/app.html';
 </script>
 </body>

@@ -144,4 +144,28 @@ router.put('/drive', auth, (req, res) => {
   res.json({ message: 'Drive path updated', drive: updated });
 });
 
+// ── PUT /api/auth/password ──
+router.put('/password', auth, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'Current and new passwords required' });
+  }
+
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  const match = await bcrypt.compare(currentPassword, user.password);
+  if (!match) return res.status(401).json({ error: 'Current password incorrect' });
+
+  if (newPassword.length < 8) {
+    return res.status(400).json({ error: 'New password must be at least 8 characters' });
+  }
+
+  const hash = await bcrypt.hash(newPassword, 12);
+  db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hash, user.id);
+
+  console.log(`[PUT /auth/password] user "${user.username}" updated their password`);
+  res.json({ message: 'Password updated successfully' });
+});
+
 module.exports = router;

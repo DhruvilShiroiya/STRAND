@@ -1,6 +1,28 @@
-node_modules
+# Dependencies
+node_modules/
+
+# Environment
 .env
+.env.local
+.env.production
+
+# Database
+data/
+
+# Config with local paths
+config.json
+
+# macOS
 .DS_Store
-dist
-build
+**/.DS_Store
+
+# Logs
 *.log
+npm-debug.log*
+
+# Cloudflare
+.cloudflared/
+
+# Editor
+.antigravity/
+.vscode/settings.json

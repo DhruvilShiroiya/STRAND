@@ -20,7 +20,9 @@ const Nav = {
 
     // Show correct layout
     if (mobile) {
-      this.showMobilePage('upload');
+      const activeTab = savedTab || (btns[0] ? btns[0].dataset.tab : 'upload');
+      this.showMobilePage(activeTab === 'files' ? 'upload' : activeTab);
+      
       document.getElementById('desktopUpload').style.display = 'none';
       document.getElementById('desktopFolder').style.display = 'none';
       document.getElementById('desktopProfile').classList.remove('active');
