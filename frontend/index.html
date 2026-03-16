@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Strand</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;1,400;1,500&family=DM+Mono:wght@400;500&family=Figtree:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/strand.css">
+<style>
+  .login-wrap {
+    min-height: 100dvh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .login-box { width: 100%; max-width: 360px; }
+  .login-wordmark {
+    font-family: 'Cormorant', serif;
+    font-size: 40px; font-weight: 500;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .login-tagline {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--ink3);
+    margin-bottom: 52px;
+  }
+  .login-label {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--ink3);
+    margin-bottom: 6px;
+  }
+  .login-input {
+    width: 100%; background: transparent;
+    border: none; border-bottom: 1.5px solid var(--line);
+    padding: 10px 0;
+    font-family: 'Figtree', sans-serif;
+    font-size: 16px; color: var(--ink);
+    outline: none; caret-color: var(--accent);
+    transition: border-color 0.2s; margin-bottom: 28px;
+  }
+  .login-input:focus { border-color: var(--ink); }
+  .login-input::placeholder { color: var(--ink4); }
+  .login-btn {
+    width: 100%; padding: 15px;
+    background: var(--ink); color: var(--bg);
+    border: none; border-radius: 9px;
+    font-family: 'Figtree', sans-serif;
+    font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: opacity 0.15s, transform 0.15s;
+  }
+  .login-btn:hover   { opacity: 0.88; transform: translateY(-1px); }
+  .login-btn:active  { transform: none; }
+  .login-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .login-error {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; letter-spacing: 0.05em;
+    color: var(--red); margin-top: 12px; display: none;
+  }
+  .login-error.show { display: block; }
+</style>
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-box">
+    <div class="login-wordmark">Strand</div>
+    <div class="login-tagline">Local storage, without the local.</div>
+
+    <label class="login-label">Username</label>
+    <input class="login-input" type="text" id="loginUsername"
+      placeholder="your username"
+      autocomplete="username" autocapitalize="none">
+
+    <label class="login-label">Password</label>
+    <input class="login-input" type="password" id="loginPassword"
+      placeholder="••••••••"
+      autocomplete="current-password">
+
+    <button class="login-btn" id="loginBtn" onclick="login()">Sign in</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('loginPassword')
+    .addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+  document.getElementById('loginUsername')
+    .addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
+
+  async function login() {
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const btn      = document.getElementById('loginBtn');
+    const errEl    = document.getElementById('loginError');
+
+    if (!username || !password) {
+      showError('Enter your username and password');
+      return;
+    }
+
+    btn.disabled    = true;
+    btn.textContent = 'Signing in…';
+    errEl.classList.remove('show');
+
+    try {
+      const res  = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Login failed');
+
+      // Store token in sessionStorage and redirect
+      sessionStorage.setItem('strand_token', data.token);
+      sessionStorage.setItem('strand_user',  JSON.stringify(data.user));
+      window.location.href = '/app.html';
+
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      btn.disabled    = false;
+      btn.textContent = 'Sign in';
+    }
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('loginError');
+    el.textContent = msg;
+    el.classList.add('show');
+  }
+
+  // Redirect to app if already logged in
+  const existingToken = sessionStorage.getItem('strand_token');
+  if (existingToken) window.location.href = '/app.html';
+</script>
+</body>
+</html>

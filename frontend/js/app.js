@@ -1,0 +1,33 @@
+// ══════════════════════════════
+// BOOT
+// ══════════════════════════════
+(function () {
+  // Redirect to login if no token
+  if (!Auth.check()) return;
+
+  // Init nav layout
+  Nav.init();
+
+  const savedTab = sessionStorage.getItem('strand_tab');
+  if (savedTab) {
+    const btn = document.querySelector(`[data-tab="${savedTab}"]`);
+    if (btn) Nav.switch(btn);
+  }
+
+  // Load folder views for both sides
+  Folder.loadRoot('D');
+  Folder.loadRoot('M');
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      Search.close();
+      Sheet.close();
+      if (typeof Preview !== 'undefined') Preview.close();
+    }
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      Search.open();
+    }
+  });
+})();

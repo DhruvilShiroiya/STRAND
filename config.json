@@ -1,0 +1,6 @@
+{
+  "adminDrivePath": "/Volumes/DS/strand-admin",
+  "sharedDrivePath": "/Volumes/DS/strand-shared",
+  "appPort": 3000,
+  "warningThresholdPercent": 90
+}

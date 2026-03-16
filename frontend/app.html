@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Strand</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;1,400;1,500&family=DM+Mono:wght@400;500&family=Figtree:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="/css/strand.css">
+</head>
+
+<body>
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <span class="wordmark">Strand</span>
+    <button class="topbar-action" onclick="Search.open()">Search</button>
+  </header>
+
+  <div class="app-body">
+
+    <!-- DESKTOP: UPLOAD PANE -->
+    <div class="pane-upload" id="desktopUpload">
+      <div class="pane-label">
+        <span>Upload</span>
+        <span style="color:var(--ink4);font-size:10px;font-family:'DM Mono',monospace;">↑ files</span>
+      </div>
+      <div class="upload-zone" id="dropZoneD" onclick="document.getElementById('fileInD').click()"
+        ondragover="Upload.over(event,'dropZoneD')" ondragleave="Upload.leave('dropZoneD')"
+        ondrop="Upload.drop(event,'D')">
+        <span class="uz-arrow"></span>
+        <div class="uz-line1">Drop files here</div>
+        <div class="uz-line2">or <span>browse to upload</span></div>
+      </div>
+      <div class="browse-row" onclick="document.getElementById('fileInD').click()">
+        <span class="browse-label">Choose files</span>
+        <span class="browse-sub">Any format</span>
+      </div>
+      <div id="queueWrapD" style="display:none;">
+        <div class="s-label" style="padding-top:14px;">Uploading</div>
+        <div class="divider-soft"></div>
+        <div id="queueListD"></div>
+      </div>
+      <input type="file" id="fileInD" multiple style="display:none" onchange="Upload.handle(this.files,'D')">
+    </div>
+
+    <!-- DESKTOP: FOLDER PANE -->
+    <div class="pane-folder" id="desktopFolder">
+      <div id="dRootView">
+        <div class="pane-label">
+          <span>Folders</span>
+          <span id="dFolderCount" style="color:var(--ink4);font-size:10px;font-family:'DM Mono',monospace;"></span>
+        </div>
+        <div class="folder-pg-title">My Files</div>
+        <div class="folder-pg-meta" id="dFolderMeta">Loading…</div>
+        <div class="divider"></div>
+        <div id="dFolderList">
+          <div class="loading-row">Loading…</div>
+        </div>
+        <div class="new-folder-row" onclick="Sheet.open('D')">
+          <span class="nfr-label">New folder</span>
+          <span class="nfr-plus">+</span>
+        </div>
+      </div>
+      <div id="dInnerView" style="display:none;">
+        <div class="pane-label">
+          <span id="dInnerLabel"></span>
+          <span
+            style="color:var(--ink3);font-size:10px;font-family:'DM Mono',monospace;cursor:pointer;letter-spacing:0.05em;"
+            onclick="Folder.back('D')">← Back</span>
+        </div>
+        <div class="breadcrumb" id="dBreadcrumb"></div>
+        <div class="folder-pg-title" id="dInnerTitle"></div>
+        <div class="folder-pg-meta" id="dInnerMeta"></div>
+        <div class="divider"></div>
+        <div id="dFileList">
+          <div class="loading-row">Loading…</div>
+        </div>
+        <div class="new-folder-row" onclick="Sheet.open('D')">
+          <span class="nfr-label">New folder here</span>
+          <span class="nfr-plus">+</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- DESKTOP: PROFILE PANE -->
+    <div class="pane-profile" id="desktopProfile">
+      <div class="profile-inner" id="profileContent"></div>
+    </div>
+
+    <!-- MOBILE: UPLOAD PAGE -->
+    <div class="mobile-page active" id="mob-upload">
+      <div class="upload-zone" style="margin:20px 20px 0;" id="dropZoneM"
+        onclick="document.getElementById('fileInM').click()" ondragover="Upload.over(event,'dropZoneM')"
+        ondragleave="Upload.leave('dropZoneM')" ondrop="Upload.drop(event,'M')">
+        <span class="uz-arrow"></span>
+        <div class="uz-line1">Drop files here</div>
+        <div class="uz-line2">or <span>browse to upload</span></div>
+      </div>
+      <div class="browse-row" style="margin:0 20px;" onclick="document.getElementById('fileInM').click()">
+        <span class="browse-label">Choose files</span>
+        <span class="browse-sub">Any format</span>
+      </div>
+      <div id="queueWrapM" style="display:none;">
+        <div class="s-label" style="padding-top:14px;padding-left:20px;">Uploading</div>
+        <div class="divider-soft"></div>
+        <div id="queueListM"></div>
+      </div>
+      <input type="file" id="fileInM" multiple style="display:none" onchange="Upload.handle(this.files,'M')">
+    </div>
+
+    <!-- MOBILE: FOLDER PAGE -->
+    <div class="mobile-page" id="mob-folder">
+      <div id="mRootView">
+        <div class="folder-pg-title" id="mFolderTitle" style="padding-top:18px;">My Files</div>
+        <div class="folder-pg-meta" id="mFolderMeta">Loading…</div>
+        <div class="divider"></div>
+        <div id="mFolderList">
+          <div class="loading-row">Loading…</div>
+        </div>
+        <div class="new-folder-row" onclick="Sheet.open('M')">
+          <span class="nfr-label">New folder</span>
+          <span class="nfr-plus">+</span>
+        </div>
+      </div>
+      <div id="mInnerView" style="display:none;">
+        <div class="breadcrumb" id="mBreadcrumb" style="padding-top:16px;"></div>
+        <div class="folder-pg-title" id="mInnerTitle"></div>
+        <div class="folder-pg-meta" id="mInnerMeta"></div>
+        <div class="divider"></div>
+        <div id="mFileList">
+          <div class="loading-row">Loading…</div>
+        </div>
+        <div class="new-folder-row" onclick="Sheet.open('M')">
+          <span class="nfr-label">New folder here</span>
+          <span class="nfr-plus">+</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MOBILE: PROFILE PAGE -->
+    <div class="mobile-page" id="mob-profile">
+      <div id="mobProfileContent"></div>
+    </div>
+
+  </div><!-- /app-body -->
+
+  <!-- PILL NAV -->
+  <div class="pill-wrap">
+    <nav class="pill" id="pill">
+      <div class="pill-track" id="pillTrack"></div>
+      <button class="pill-btn active" data-tab="files" onclick="Nav.switch(this)">Files</button>
+      <button class="pill-btn" data-tab="upload" onclick="Nav.switch(this)" style="display:none;">Upload</button>
+      <button class="pill-btn" data-tab="folder" onclick="Nav.switch(this)" style="display:none;">Folder</button>
+      <button class="pill-btn" data-tab="profile" onclick="Nav.switch(this)">Profile</button>
+    </nav>
+  </div>
+
+  <!-- SHEET -->
+  <div class="overlay" id="sheetOverlay" onclick="if(event.target===this)Sheet.close()">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-label">New</div>
+      <div class="sheet-title">Create folder</div>
+      <input class="sheet-input" type="text" id="folderInput" placeholder="Folder name">
+      <button class="sheet-cta" onclick="Sheet.create()">Create</button>
+    </div>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="search-pg" id="searchPg">
+    <div class="search-header">
+      <input class="search-field" type="text" id="searchField" placeholder="Search files and folders…"
+        oninput="Search.query(this.value)">
+      <button class="search-dismiss" onclick="Search.close()">Cancel</button>
+    </div>
+    <div class="search-body" id="searchBody">
+      <div class="search-empty">Start typing to search</div>
+    </div>
+  </div>
+
+  <!-- PREVIEW -->
+  <div class="preview-overlay" id="previewOverlay" onclick="if(event.target===this)Preview.close()">
+    <div class="preview-box">
+      <div class="preview-bar">
+        <span class="preview-filename" id="previewFilename"></span>
+        <button class="preview-close" onclick="Preview.close()">Close</button>
+      </div>
+      <div class="preview-body" id="previewBody"></div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <!-- JS MODULES -->
+  <script src="/js/api.js"></script>
+  <script src="/js/upload.js"></script>
+  <script src="/js/folder.js"></script>
+  <script src="/js/profile.js"></script>
+  <script src="/js/search.js"></script>
+  <script src="/js/nav.js"></script>
+  <script src="/js/preview.js"></script>
+  <script src="/js/app.js"></script>
+
+</body>
+
+</html>
