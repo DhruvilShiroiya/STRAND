@@ -141,6 +141,11 @@ chmod +x start-strand.sh
 ./start-strand.sh
 ```
 
+To stop the script and all background processes (server and tunnel):
+```bash
+pkill -f strand
+```
+
 To run on Mac login, add `start-strand.sh` to **System Settings → General → Login Items**.
 
 ---
