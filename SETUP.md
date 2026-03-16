@@ -21,9 +21,18 @@ Clone or download the project, then install dependencies.
 npm install
 ```
 
+## 02 — Frontend Config
+
+Copy the example config and set your tunnel domain.
+```bash
+cp frontend/js/config.example.js frontend/js/config.js
+```
+
+Then edit `frontend/js/config.js` and replace `your-tunnel-domain.com` with your actual tunnel URL.
+
 ---
 
-## 02 — Configure
+## 03 — Configure
 
 Copy the example config and edit drive paths.
 
@@ -53,7 +62,7 @@ mkdir -p /Volumes/YourDrive/strand-shared
 
 ---
 
-## 03 — Database
+## 04 — Database
 
 Initialize the database and create the first admin user.
 
@@ -71,7 +80,7 @@ password: strand123
 
 ---
 
-## 04 — First Login
+## 05 — First Login
 
 Open your browser and go to:
 
@@ -81,7 +90,7 @@ http://localhost:3000
 
 ---
 
-## 05 — Cloudflare Tunnel
+## 06 — Cloudflare Tunnel
 
 For remote access from outside your home network.
 
@@ -123,7 +132,7 @@ cloudflared tunnel run strand
 
 ---
 
-## 06 — Auto Start
+## 07 — Auto Start
 
 To start both the server and tunnel automatically, run the included script.
 
@@ -136,7 +145,7 @@ To run on Mac login, add `start-strand.sh` to **System Settings → General → 
 
 ---
 
-## 07 — Add Users
+## 08 — Add Users
 
 Use the admin API to create additional users. Must be called from localhost.
 
