@@ -36,6 +36,10 @@ const Nav = {
   },
 
   switch(btn) {
+    if (btn.classList.contains('active')) {
+      location.reload();
+      return;
+    }
     const mobile = this._isMobile();
 
     this._visible().forEach(b => b.classList.remove('active'));
