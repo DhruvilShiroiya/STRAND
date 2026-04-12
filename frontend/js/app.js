@@ -51,4 +51,21 @@ const Modal = {
 
   // Init gestures
   Gestures.init();
+
+  // HARD LOCK: Prevent multi-finger zoom
+  document.addEventListener('touchstart', e => {
+    if (e.touches.length > 1) e.preventDefault();
+  }, { passive: false });
+  
+  // Prevent double-tap zoom (except for inputs)
+  let lastTouch = 0;
+  document.addEventListener('touchend', e => {
+    const now = Date.now();
+    if (now - lastTouch <= 300) {
+      if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+      }
+    }
+    lastTouch = now;
+  }, { passive: false });
 })();

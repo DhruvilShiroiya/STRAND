@@ -17,6 +17,9 @@
 
 html {
   -webkit-tap-highlight-color: transparent;
+  touch-action: pan-x pan-y;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 :root {
@@ -94,6 +97,9 @@ body {
   color: var(--ink);
   min-height: 100dvh;
   overflow-x: hidden;
+  touch-action: pan-x pan-y;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* ── TOPBAR ── */
