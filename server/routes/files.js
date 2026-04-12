@@ -263,20 +263,47 @@ router.post('/mkdir', auth, (req, res) => {
 router.delete('/delete', auth, (req, res) => {
   try {
     const drivePath = getUserDrivePath(req.user);
-    const paths = req.body.paths || [req.body.path ?? req.query.path ?? ''];
     
-    console.log('[delete] processing:', paths.length, 'items');
+    // Safety check: if body has paths, use it, else fallback to single path
+    let paths = req.body.paths;
+    if (!paths) {
+      const single = req.body.path ?? req.query.path;
+      paths = single ? [single] : [];
+    }
+    
+    if (paths.length === 0) {
+      return res.status(400).json({ error: 'No paths provided for deletion' });
+    }
+
+    console.log(`[delete] User "${req.user.username}" deleting ${paths.length} items:`, paths);
 
     for (const filePath of paths) {
-      if (!filePath) continue;
+      // ABSOLUTE SAFETY: Do not allow deleting empty path or root '/'
+      if (!filePath || filePath === '/' || filePath.trim() === '') {
+        console.error(`[delete] CRITICAL: Blocked attempt by ${req.user.username} to delete root folder!`);
+        continue;
+      }
+
       const targetPath = safePath(drivePath, req.user.username, filePath);
       
-      if (!fs.existsSync(targetPath)) continue;
+      // Final sanity check: targetPath must NOT be the user root itself
+      const userRoot = safePath(drivePath, req.user.username, '');
+      if (targetPath === userRoot) {
+        console.error(`[delete] CRITICAL: safePath resolved to user root for input "${filePath}". Blocking.`);
+        continue;
+      }
+
+      if (!fs.existsSync(targetPath)) {
+        console.warn(`[delete] Item not found: ${filePath}`);
+        continue;
+      }
 
       const stat = fs.statSync(targetPath);
       if (stat.isDirectory()) {
+        console.log(`[delete] rmdir: ${filePath}`);
         fs.rmSync(targetPath, { recursive: true, force: true });
       } else {
+        console.log(`[delete] unlink: ${filePath}`);
         fs.unlinkSync(targetPath);
       }
     }
