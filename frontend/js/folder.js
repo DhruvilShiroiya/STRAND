@@ -139,6 +139,9 @@ const Folder = {
 
     this._renderCrumbs(side);
     this.loadInner(side, newPath);
+
+    sessionStorage.setItem('strand_path_D', JSON.stringify({ path: this.currentPath.D, stack: this.pathStack.D }));
+    sessionStorage.setItem('strand_path_M', JSON.stringify({ path: this.currentPath.M, stack: this.pathStack.M }));
   },
 
   back(side) {
