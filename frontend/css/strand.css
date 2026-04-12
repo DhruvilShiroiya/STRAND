@@ -1848,9 +1848,8 @@ input[type="range"]::-moz-range-thumb {
 /* ── BATCH SELECTION ── */
 .folder-header {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
-  margin-top: 12px;
   margin-bottom: 4px;
 }
 

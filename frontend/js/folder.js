@@ -2,65 +2,6 @@ const Folder = {
   currentPath: { D: '/', M: '/' },
   pathStack: { D: [], M: [] },
   allFiles: [],
-  selectMode: false,
-  selectedPaths: new Set(),
-
-  toggleSelectMode(side) {
-    this.selectMode = !this.selectMode;
-    this.selectedPaths.clear();
-    this.updateSelectionBar();
-    
-    // Toggle button UI
-    const btns = document.querySelectorAll('.select-mode-toggle');
-    btns.forEach(b => {
-      b.classList.toggle('active', this.selectMode);
-      b.textContent = this.selectMode ? 'Done' : 'Select';
-    });
-    
-    // Refresh views to show checkboxes
-    this.refresh('D');
-    this.refresh('M');
-  },
-
-  toggleSelection(side, f) {
-    const fullPath = (this.currentPath[side] === '/' ? '/' : this.currentPath[side] + '/') + f.name;
-    if (this.selectedPaths.has(fullPath)) {
-      this.selectedPaths.delete(fullPath);
-    } else {
-      this.selectedPaths.add(fullPath);
-    }
-    this.updateSelectionBar();
-    this.refresh(side);
-  },
-
-  updateSelectionBar() {
-    const bar = document.getElementById('selectionBar');
-    const count = document.getElementById('selectionCount');
-    if (this.selectMode && this.selectedPaths.size > 0) {
-      bar.classList.add('show');
-      count.textContent = `${this.selectedPaths.size} item${this.selectedPaths.size === 1 ? '' : 's'} selected`;
-    } else {
-      bar.classList.remove('show');
-    }
-  },
-
-  async deleteSelected() {
-    if (this.selectedPaths.size === 0) return;
-    
-    Modal.confirm('Delete Multiple Items', `Are you sure you want to delete ${this.selectedPaths.size} items? This cannot be undone.`, async () => {
-      try {
-        await API.del('/files/delete', { paths: Array.from(this.selectedPaths) });
-        Toast.show(`Deleted ${this.selectedPaths.size} items`);
-        this.selectMode = false;
-        this.selectedPaths.clear();
-        this.updateSelectionBar();
-        this.refresh('D');
-        this.refresh('M');
-      } catch (err) {
-        Toast.error(err.message);
-      }
-    });
-  },
 
   // ── Load root view ──
   async loadRoot(side) {
@@ -268,10 +209,10 @@ const Folder = {
     let nameEl = null;
 
     rows.forEach(row => {
-      const n = row.querySelector('.fi-name, .fr-name');
-      if (n && n.textContent === oldName) {
+      const textNode = row.querySelector('.name-text');
+      if (textNode && textNode.textContent === oldName) {
         targetRow = row;
-        nameEl = n;
+        nameEl = textNode.closest('.fi-name, .fr-name');
       }
     });
 
@@ -392,22 +333,14 @@ const Folder = {
     el.className = 'folder-item';
     el.style.animationDelay = (delay * 0.04) + 's';
     el.innerHTML = `
-      <span class="fi-name">${escAttr(f.name)}</span>
+      <span class="fi-name"><span class="name-text">${escAttr(f.name)}</span></span>
       <span class="fi-meta">—</span>
       <span class="fi-arrow">›</span>
       <div class="fr-actions">
         <button class="fr-btn"     onclick="event.stopPropagation();Folder.rename('${escAttr(side)}','${escAttr(f.name)}');">✎</button>
         <button class="fr-btn del" onclick="event.stopPropagation();Folder.delete('${escAttr(side)}','${escAttr(f.name)}');">✕</button>
       </div>`;
-
-    const fullPath = (this.currentPath[side] === '/' ? '/' : this.currentPath[side] + '/') + f.name;
-    if (this.selectMode) {
-      el.classList.add('selecting');
-      if (this.selectedPaths.has(fullPath)) el.classList.add('selected');
-      el.onclick = () => this.toggleSelection(side, f);
-    } else {
-      el.onclick = () => this.enter(side, f.name);
-    }
+    el.onclick = () => this.enter(side, f.name);
 
     // Drop target logic
     el.ondragover = e => { e.preventDefault(); el.classList.add('drag-target'); };
@@ -436,7 +369,7 @@ const Folder = {
     row.innerHTML = `
       <div class="file-ext-block">${ext}</div>
       <div class="fr-info">
-        <div class="fr-name">${escAttr(f.name)}${isNew ? '<span class="tag-new">New</span>' : ''}</div>
+        <div class="fr-name"><span class="name-text">${escAttr(f.name)}</span>${isNew ? '<span class="tag-new">New</span>' : ''}</div>
         <div class="fr-meta">${f.mtime ? timeAgo(f.mtime) : ''}</div>
       </div>
       <div class="fr-size">${f.size ? fmtSize(f.size) : ''}</div>
@@ -446,13 +379,7 @@ const Folder = {
         <button class="fr-btn del" onclick="Folder.delete('${side}', '${escAttr(f.name)}'); event.stopPropagation();" title="Delete">✕</button>
       </div>`;
 
-    if (this.selectMode) {
-      row.classList.add('selecting');
-      if (this.selectedPaths.has(fullPath)) row.classList.add('selected');
-      row.onclick = () => this.toggleSelection(side, f);
-    } else {
-      row.onclick = () => Preview.open(f.name, fullPath);
-    }
+    row.onclick = () => Preview.open(f.name, fullPath);
     
     row.ondragstart = e => {
       e.dataTransfer.setData('text/plain', f.name);

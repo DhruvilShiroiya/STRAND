@@ -57,10 +57,7 @@
           <span>Folders</span>
           <span id="dFolderCount" style="color:var(--ink4);font-size:10px;font-family:'DM Mono',monospace;"></span>
         </div>
-        <div class="folder-header folder-pg-title">
-          <span id="dFolderTitle">My Files</span>
-          <button class="select-mode-toggle" id="selBtnD_Root" onclick="Folder.toggleSelectMode('D')">Select</button>
-        </div>
+        <div class="folder-pg-title">My Files</div>
         <div class="folder-pg-meta" id="dFolderMeta">Loading…</div>
         <div class="divider"></div>
         <div id="dFolderList">
@@ -79,12 +76,8 @@
             onclick="Folder.back('D')">← Back</span>
         </div>
         <div class="breadcrumb" id="dBreadcrumb"></div>
-        <div class="folder-header folder-pg-title">
-          <span id="dInnerTitle"></span>
-          <button class="select-mode-toggle" id="selBtnD_Inner" onclick="Folder.toggleSelectMode('D')">Select</button>
-        </div>
+        <div class="folder-pg-title" id="dInnerTitle"></div>
         <div class="folder-pg-meta" id="dInnerMeta"></div>
-        <div id="dInnerLabel" style="display:none;"></div>
         <div class="divider"></div>
         <div id="dFileList">
           <div class="loading-row">Loading…</div>
@@ -129,10 +122,7 @@
     <!-- MOBILE: FOLDER PAGE -->
     <div class="mobile-page" id="mob-folder">
       <div id="mRootView">
-        <div class="folder-pg-title" style="padding-top:18px;">
-          <span id="mFolderTitle">My Files</span>
-          <button class="select-mode-toggle" id="selBtnM_Root" onclick="Folder.toggleSelectMode('M')">Select</button>
-        </div>
+        <div class="folder-pg-title" id="mFolderTitle" style="padding-top:18px;">My Files</div>
         <div class="folder-pg-meta" id="mFolderMeta">Loading…</div>
         <div class="divider"></div>
         <div id="mFolderList">
@@ -145,10 +135,7 @@
       </div>
       <div id="mInnerView" style="display:none;">
         <div class="breadcrumb" id="mBreadcrumb" style="padding-top:16px;"></div>
-        <div class="folder-pg-title">
-          <span id="mInnerTitle"></span>
-          <button class="select-mode-toggle" id="selBtnM_Inner" onclick="Folder.toggleSelectMode('M')">Select</button>
-        </div>
+        <div class="folder-pg-title" id="mInnerTitle"></div>
         <div class="folder-pg-meta" id="mInnerMeta"></div>
         <div class="divider"></div>
         <div id="mFileList">
@@ -231,19 +218,6 @@
       <div class="search-empty">Start typing to search</div>
     </div>
   </div>
-
-  <!-- BATCH ACTION BAR -->
-  <div class="selection-bar" id="selectionBar">
-    <div class="selection-info">
-      <span class="selection-count" id="selectionCount">0 items selected</span>
-    </div>
-    <div class="selection-actions">
-      <button class="sel-btn-cancel" onclick="Folder.toggleSelectMode()">Cancel</button>
-      <button class="sel-btn-delete" onclick="Folder.deleteSelected()">Delete Selected</button>
-    </div>
-  </div>
-
-  <!-- FOLDER PICKER -->
 
   <!-- FOLDER PICKER -->
   <div class="overlay" id="pickerOverlay" onclick="if(event.target===this)Upload.closePicker()">
