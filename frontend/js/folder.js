@@ -413,8 +413,31 @@ const Folder = {
         el.onclick = () => {
           this.pathStack[side] = crumbs.slice(0, i).map(c => c.path);
           this.currentPath[side] = crumb.path;
-          if (crumb.path === '/') this.loadRoot(side);
-          else this.loadInner(side, crumb.path);
+          
+          if (crumb.path === '/') {
+            if (side === 'D') {
+              document.getElementById('dRootView').style.display = 'block';
+              document.getElementById('dInnerView').style.display = 'none';
+            } else {
+              document.getElementById('mRootView').style.display = 'block';
+              document.getElementById('mInnerView').style.display = 'none';
+            }
+            this.loadRoot(side);
+          } else {
+            // Ensure inner view is visible for parent folders
+            if (side === 'D') {
+              document.getElementById('dRootView').style.display = 'none';
+              document.getElementById('dInnerView').style.display = 'block';
+              document.getElementById('dInnerTitle').textContent = crumb.label;
+              document.getElementById('dInnerLabel').textContent = crumb.label;
+            } else {
+              document.getElementById('mRootView').style.display = 'none';
+              document.getElementById('mInnerView').style.display = 'block';
+              document.getElementById('mInnerTitle').textContent = crumb.label;
+            }
+            this._renderCrumbs(side);
+            this.loadInner(side, crumb.path);
+          }
         };
 
         // Breadcrumb Drop Target
