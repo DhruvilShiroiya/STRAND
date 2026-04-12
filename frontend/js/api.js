@@ -32,10 +32,11 @@ const Auth = {
 // API FETCH WRAPPER
 // ══════════════════════════════
 const API = {
-  async call(method, path, body) {
+  async call(method, path, body, signal) {
     const opts = {
       method,
-      headers: { 'Authorization': 'Bearer ' + Auth.token }
+      headers: { 'Authorization': 'Bearer ' + Auth.token },
+      signal
     };
 
     if (body instanceof FormData) {

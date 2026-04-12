@@ -52,7 +52,6 @@ const Folder = {
           folders.length + ' folder' + (folders.length !== 1 ? 's' : '');
       }
 
-      // Cache for search
       this._cacheItems(data.items, '/');
 
       const list = document.getElementById(listId);
@@ -64,18 +63,7 @@ const Folder = {
       }
 
       folders.forEach((f, i) => {
-        const el = document.createElement('div');
-        el.className = 'folder-item';
-        el.style.animationDelay = (i * 0.04) + 's';
-        el.innerHTML = `
-          <span class="fi-name">${escAttr(f.name)}</span>
-          <span class="fi-meta">—</span>
-          <span class="fi-arrow">›</span>
-          <div class="fr-actions">
-            <button class="fr-btn del" onclick="event.stopPropagation();Folder.delete('${escAttr(side)}','${escAttr(f.name)}');">✕</button>
-          </div>`;
-        el.onclick = () => this.enter(side, f.name);
-        list.appendChild(el);
+        list.appendChild(this._folderRow(f, side, i));
       });
 
       files.forEach((f, i) => {
@@ -115,18 +103,7 @@ const Folder = {
       }
 
       folders.forEach((f, i) => {
-        const el = document.createElement('div');
-        el.className = 'folder-item';
-        el.style.animationDelay = (i * 0.04) + 's';
-        el.innerHTML = `
-          <span class="fi-name">${escAttr(f.name)}</span>
-          <span class="fi-meta">—</span>
-          <span class="fi-arrow">›</span>
-          <div class="fr-actions">
-            <button class="fr-btn del" onclick="event.stopPropagation();Folder.delete('${escAttr(side)}','${escAttr(f.name)}');">✕</button>
-          </div>`;
-        el.onclick = () => this.enter(side, f.name);
-        list.appendChild(el);
+        list.appendChild(this._folderRow(f, side, i));
       });
 
       files.forEach((f, i) => {
@@ -139,7 +116,6 @@ const Folder = {
     }
   },
 
-  // ── Enter a folder ──
   enter(side, name) {
     const newPath = this.currentPath[side] === '/'
       ? '/' + name
@@ -168,7 +144,6 @@ const Folder = {
     sessionStorage.setItem('strand_path_M', JSON.stringify({ path: this.currentPath.M, stack: this.pathStack.M }));
   },
 
-  // ── Go back ──
   back(side) {
     const prev = this.pathStack[side].pop();
     if (prev === undefined) return;
@@ -199,7 +174,6 @@ const Folder = {
     sessionStorage.setItem('strand_path_M', JSON.stringify({ path: this.currentPath.M, stack: this.pathStack.M }));
   },
 
-  // ── Refresh current view ──
   refresh(side) {
     if (this.pathStack[side].length > 0) {
       this.loadInner(side, this.currentPath[side]);
@@ -208,13 +182,12 @@ const Folder = {
     }
   },
 
-  // ── Delete a file or folder ──
   async delete(side, name) {
+    if (!confirm(`Delete "${name}"?`)) return;
     const filePath = this.currentPath[side] === '/'
       ? '/' + name
       : this.currentPath[side] + '/' + name;
     try {
-      console.log('[delete] sending path:', filePath);
       await API.del('/files/delete', { path: filePath });
       Toast.show('Deleted');
       this.refresh(side);
@@ -223,7 +196,37 @@ const Folder = {
     }
   },
 
-  // ── Download a file ──
+  async rename(side, oldName) {
+    const newName = prompt(`Rename "${oldName}" to:`, oldName);
+    if (!newName || newName === oldName) return;
+
+    const base = this.currentPath[side] === '/' ? '/' : this.currentPath[side] + '/';
+    try {
+      await API.post('/files/rename', {
+        oldPath: base + oldName,
+        newPath: base + newName
+      });
+      Toast.show('Renamed');
+      this.refresh(side);
+    } catch (err) {
+      Toast.error(err.message);
+    }
+  },
+
+  async _move(side, fileName, targetFolder) {
+    const base = this.currentPath[side] === '/' ? '/' : this.currentPath[side] + '/';
+    const oldPath = base + fileName;
+    const newPath = base + targetFolder + '/' + fileName;
+
+    try {
+      await API.post('/files/rename', { oldPath, newPath });
+      Toast.show(`Moved to ${targetFolder}`);
+      this.refresh(side);
+    } catch (err) {
+      Toast.error(err.message);
+    }
+  },
+
   download(name) {
     const filePath = this.currentPath['D'] === '/'
       ? '/' + name
@@ -236,16 +239,50 @@ const Folder = {
     document.body.removeChild(a);
   },
 
-  // ── Build a file row element ──
+  _folderRow(f, side, delay) {
+    const el = document.createElement('div');
+    el.className = 'folder-item';
+    el.style.animationDelay = (delay * 0.04) + 's';
+    el.innerHTML = `
+      <span class="fi-name">${escAttr(f.name)}</span>
+      <span class="fi-meta">—</span>
+      <span class="fi-arrow">›</span>
+      <div class="fr-actions">
+        <button class="fr-btn"     onclick="event.stopPropagation();Folder.rename('${escAttr(side)}','${escAttr(f.name)}');">✎</button>
+        <button class="fr-btn del" onclick="event.stopPropagation();Folder.delete('${escAttr(side)}','${escAttr(f.name)}');">✕</button>
+      </div>`;
+    el.onclick = () => this.enter(side, f.name);
+
+    // Drop target logic
+    el.ondragover = e => { e.preventDefault(); el.classList.add('drag-target'); };
+    el.ondragleave = () => el.classList.remove('drag-target');
+    el.ondrop = e => {
+      e.preventDefault();
+      el.classList.remove('drag-target');
+      const fileName = e.dataTransfer.getData('text/plain');
+      if (fileName && fileName !== f.name) {
+        this._move(side, fileName, f.name);
+      }
+    };
+    return el;
+  },
+
   _fileRow(f, side, delay) {
     const ext = f.ext || '—';
     const el = document.createElement('div');
     el.className = 'file-row';
     el.style.animationDelay = (delay * 0.04) + 's';
+    el.draggable = true;
 
-    // Add click handler for preview
     const filePath = this.currentPath[side] === '/' ? '/' + f.name : this.currentPath[side] + '/' + f.name;
     el.onclick = () => Preview.open(f.name, filePath);
+    
+    el.ondragstart = e => {
+      e.dataTransfer.setData('text/plain', f.name);
+      el.classList.add('dragging');
+    };
+    el.ondragend = () => el.classList.remove('dragging');
+
     el.innerHTML = `
       <div class="file-ext-block">${escAttr(ext)}</div>
       <div class="fr-info">
@@ -254,13 +291,13 @@ const Folder = {
       </div>
       <span class="fr-size">${f.size_fmt || '—'}</span>
       <div class="fr-actions">
+        <button class="fr-btn"     onclick="event.stopPropagation();Folder.rename('${escAttr(side)}','${escAttr(f.name)}')">✎</button>
         <button class="fr-btn"     onclick="event.stopPropagation();Folder.download('${escAttr(f.name)}')">↓</button>
         <button class="fr-btn del" onclick="event.stopPropagation();Folder.delete('${escAttr(side)}','${escAttr(f.name)}')">✕</button>
       </div>`;
     return el;
   },
 
-  // ── Render breadcrumbs ──
   _renderCrumbs(side) {
     const elId = side === 'D' ? 'dBreadcrumb' : 'mBreadcrumb';
     const bc = document.getElementById(elId);
@@ -294,7 +331,6 @@ const Folder = {
     });
   },
 
-  // ── Cache items for search ──
   _cacheItems(items, path) {
     items.forEach(item => {
       const fullPath = path === '/' ? '/' + item.name : path + '/' + item.name;
@@ -305,39 +341,29 @@ const Folder = {
   }
 };
 
-// ── New Folder Sheet ──
 const Sheet = {
   _side: 'D',
-
   open(side) {
     this._side = side;
     document.getElementById('sheetOverlay').classList.add('show');
     setTimeout(() => document.getElementById('folderInput').focus(), 220);
   },
-
   close() {
     document.getElementById('sheetOverlay').classList.remove('show');
     document.getElementById('folderInput').value = '';
   },
-
   async create() {
     const name = document.getElementById('folderInput').value.trim();
     if (!name) return;
     const side = this._side;
-    const folderPath = Folder.currentPath[side] === '/'
-      ? '/' + name
-      : Folder.currentPath[side] + '/' + name;
+    const folderPath = Folder.currentPath[side] === '/' ? '/' + name : Folder.currentPath[side] + '/' + name;
     try {
       await API.post('/files/mkdir', { path: folderPath });
       this.close();
       Toast.show('Folder created');
       Folder.refresh(side);
-    } catch (err) {
-      Toast.error(err.message);
-    }
+    } catch (err) { Toast.error(err.message); }
   }
 };
 
-// Enter key on folder input
-document.getElementById('folderInput')
-  .addEventListener('keydown', e => { if (e.key === 'Enter') Sheet.create(); });
+document.getElementById('folderInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') Sheet.create(); });

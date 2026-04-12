@@ -101,17 +101,27 @@ router.post('/upload', auth, upload.array('files', 50), async (req, res) => {
       });
     }
 
-    // Move files from tmp to target (cross-device safe)
+    // Move files from tmp to target (Optimized: Try rename first, fallback to copy)
     const uploaded = [];
     for (const file of tmpFiles) {
-      // Multer may use file.path (diskStorage) or file.tmp depending on version
       const tmpPath = file.path ?? file.tmp;
       const dest = path.join(targetPath, file.originalname);
-      // Read real size from disk — multer's file.size can lag in some versions
       const realSize = fs.statSync(tmpPath).size;
-      console.log(`[upload] moving: ${tmpPath} → ${dest} (${realSize} bytes)`);
-      fs.copyFileSync(tmpPath, dest);
-      fs.unlinkSync(tmpPath);
+
+      try {
+        // Instant move if on same drive
+        fs.renameSync(tmpPath, dest);
+        console.log(`[upload] fast-moved: ${file.originalname}`);
+      } catch (err) {
+        if (err.code === 'EXDEV') {
+          // Fallback to copy if cross-device
+          fs.copyFileSync(tmpPath, dest);
+          fs.unlinkSync(tmpPath);
+          console.log(`[upload] cross-device copy: ${file.originalname}`);
+        } else {
+          throw err;
+        }
+      }
       uploaded.push({ name: file.originalname, size: realSize });
     }
 

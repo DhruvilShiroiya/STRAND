@@ -1510,3 +1510,35 @@ input[type="range"]::-moz-range-thumb {
 ::-webkit-scrollbar {
   width: 0;
 }
+/* ── DRAG & DROP ── */
+.file-row.dragging {
+  opacity: 0.4;
+  border: 1px dashed var(--ink4);
+}
+
+.folder-item.drag-target {
+  background: var(--bg3) !important;
+  border-left: 2px solid var(--amber);
+  transform: scale(1.02);
+  z-index: 5;
+}
+
+/* ── UPLOAD CANCEL ── */
+.q-cancel {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--ink4);
+  font-family: 'DM Mono', monospace;
+  font-size: 14px;
+  transition: all 0.2s;
+  border-radius: 50%;
+}
+
+.q-cancel:hover {
+  background: var(--line);
+  color: var(--red);
+}
