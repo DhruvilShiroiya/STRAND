@@ -2,30 +2,43 @@ const Upload = {
   activeControllers: new Map(),
   isUploading: false,
   pickedPath: { D: '/', M: '/' },
+  pickerCurrentPath: '/',
   recentUploads: new Set(),
 
-  openPicker(side) {
+  openPicker(side, path = '/') {
+    this.pickerCurrentPath = path;
     const list = document.getElementById('pickerList');
-    list.innerHTML = '<div class="loading-row">Scanning folders…</div>';
+    const title = document.getElementById('pickerTitle');
+    const selectBtn = document.getElementById('pickerSelectBtn');
+
+    title.textContent = path === '/' ? 'My Files' : path.split('/').pop();
+    list.innerHTML = '<div class="loading-row">Scanning…</div>';
     document.getElementById('pickerOverlay').classList.add('show');
     
-    API.get('/files/list?path=/').then(data => {
+    API.get('/files/list?path=' + encodeURIComponent(path)).then(data => {
       list.innerHTML = '';
       const folders = data.items.filter(i => i.isDir);
       
-      const root = document.createElement('div');
-      root.className = 'picker-item';
-      root.textContent = '/ My Files';
-      root.onclick = () => this.selectFolder(side, '/', '/ My Files');
-      list.appendChild(root);
+      // Go Up Option
+      if (path !== '/') {
+        const up = document.createElement('div');
+        up.className = 'picker-item';
+        up.innerHTML = '<strong>..</strong> (Go up)';
+        const parentPath = path.substring(0, path.lastIndexOf('/')) || '/';
+        up.onclick = () => this.openPicker(side, parentPath);
+        list.appendChild(up);
+      }
 
       folders.forEach(f => {
         const item = document.createElement('div');
         item.className = 'picker-item';
-        item.textContent = '/' + f.name;
-        item.onclick = () => this.selectFolder(side, '/' + f.name, '/' + f.name);
+        item.textContent = '📁 ' + f.name;
+        const subPath = path === '/' ? '/' + f.name : path + '/' + f.name;
+        item.onclick = () => this.openPicker(side, subPath);
         list.appendChild(item);
       });
+      
+      selectBtn.onclick = () => this.selectFolder(side, path, path === '/' ? '/ My Files' : path);
     }).catch(err => {
       list.innerHTML = `<div class="empty-state">Error: ${err.message}</div>`;
     });
