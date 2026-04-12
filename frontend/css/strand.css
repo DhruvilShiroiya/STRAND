@@ -1566,3 +1566,25 @@ input[type="range"]::-moz-range-thumb {
   margin-left: 1px;
   user-select: none;
 }
+
+/* ── UPLOAD NOTICE ── */
+.upload-notice {
+  margin: 10px 28px;
+  padding: 10px 14px;
+  background: var(--bg3);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--amber);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: fadeUp 0.3s var(--ease) both;
+}
+
+.upload-notice span {
+  font-size: 14px;
+}

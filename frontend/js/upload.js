@@ -34,13 +34,24 @@ const Upload = {
     const controller = new AbortController();
     this.activeControllers.set(batchId, controller);
 
-    // Refresh warning
+    // Refresh warning (browser level)
     const warn = (e) => { e.preventDefault(); e.returnValue = ''; };
     window.addEventListener('beforeunload', warn);
 
     const wrapId = 'queueWrap' + side;
     const listId = 'queueList' + side;
-    document.getElementById(wrapId).style.display = 'block';
+    const wrapEl = document.getElementById(wrapId);
+    wrapEl.style.display = 'block';
+    
+    // UI Notice (Persistant line)
+    if (!document.getElementById('notice' + side)) {
+      const notice = document.createElement('div');
+      notice.id = 'notice' + side;
+      notice.className = 'upload-notice';
+      notice.innerHTML = '<span>⚠</span> Keep this page open until complete';
+      wrapEl.insertBefore(notice, document.getElementById(listId));
+    }
+
     const listEl = document.getElementById(listId);
 
     // Build queue rows
@@ -60,7 +71,7 @@ const Upload = {
         <div class="q-info">
           <div class="q-name">${escAttr(file.name)}</div>
           <div class="q-track"><div class="q-bar" id="b_${uid}"></div></div>
-          <div class="q-pct" id="p_${uid}">Uploading…</div>
+          <div class="q-pct" id="p_${uid}">Waiting…</div>
         </div>
         <div class="q-cancel" onclick="Upload.cancelBatch('${batchId}')" title="Cancel Batch">✕</div>
         <div class="q-check" id="c_${uid}"></div>`;
@@ -68,34 +79,33 @@ const Upload = {
       items.push({ uid, row });
     }
 
-    // Build form
+    // Capture start time for ETA
+    const startTime = Date.now();
+
     const uploadPath = Folder.currentPath[side] === '/' ? '' : Folder.currentPath[side];
     const form = new FormData();
     form.append('path', uploadPath);
     for (const file of files) form.append('files', file);
 
     try {
-      // NOTE: Standard fetch doesn't give us upload progress yet (need XHR for that if we want real 0-100%)
-      // For now, we'll keep the "active" animation but handle real completion better.
-      const uploadPromise = API.call('POST', '/files/upload', form, controller.signal);
-      
-      // Animate bars to 90% while waiting for server response
-      const interval = setInterval(() => {
+      await API.upload('/files/upload', form, (progress) => {
+        const { percent, loaded, total } = progress;
+        
+        // Calculate ETA
+        const elapsed = (Date.now() - startTime) / 1000; // seconds
+        const speed = loaded / elapsed; // bytes/sec
+        const remaining = (total - loaded) / speed; // seconds
+        let etaText = '';
+        if (remaining > 60) etaText = ` · ${Math.ceil(remaining / 60)}m left`;
+        else if (remaining > 0) etaText = ` · ${Math.ceil(remaining)}s left`;
+
         items.forEach(({ uid }) => {
           const bar = document.getElementById('b_' + uid);
           const pct = document.getElementById('p_' + uid);
-          if (!bar) return;
-          let current = parseFloat(bar.style.width) || 0;
-          if (current < 90) {
-            current += (Math.random() * 5);
-            bar.style.width = Math.min(current, 90) + '%';
-            pct.textContent = Math.round(current) + '%';
-          }
+          if (bar) bar.style.width = percent + '%';
+          if (pct) pct.textContent = Math.round(percent) + '%' + etaText;
         });
-      }, 300);
-
-      await uploadPromise;
-      clearInterval(interval);
+      }, controller.signal);
 
       // Success
       items.forEach(({ uid }) => {
@@ -113,8 +123,8 @@ const Upload = {
       Folder.refresh(side);
 
     } catch (err) {
-      if (err.name === 'AbortError') {
-        items.forEach(({ row }) => row.remove()); // Remove cancelled items
+      if (err.name === 'AbortError' || err.message === 'Upload failed') {
+        items.forEach(({ row }) => row.remove()); 
       } else {
         items.forEach(({ uid }) => {
           const pct = document.getElementById('p_' + uid);
@@ -127,7 +137,11 @@ const Upload = {
     } finally {
       this.activeControllers.delete(batchId);
       this.isUploading = this.activeControllers.size > 0;
-      window.removeEventListener('beforeunload', warn);
+      
+      if (!this.isUploading) {
+        window.removeEventListener('beforeunload', warn);
+        document.getElementById('notice' + side)?.remove();
+      }
       
       const input = document.getElementById('fileIn' + side);
       if (input) input.value = '';

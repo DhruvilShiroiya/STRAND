@@ -59,6 +59,34 @@ const API = {
     return data;
   },
 
+  upload(path, formData, onProgress, signal) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', API_BASE + '/api' + path);
+      xhr.setRequestHeader('Authorization', 'Bearer ' + Auth.token);
+
+      if (signal) {
+        signal.addEventListener('abort', () => xhr.abort());
+      }
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const percent = (e.loaded / e.total) * 100;
+          onProgress({ percent, loaded: e.loaded, total: e.total });
+        }
+      };
+
+      xhr.onload = () => {
+        const data = JSON.parse(xhr.responseText);
+        if (xhr.status >= 200 && xhr.status < 300) resolve(data);
+        else reject(new Error(data.error || 'Upload failed'));
+      };
+
+      xhr.onerror = () => reject(new Error('Network error'));
+      xhr.send(formData);
+    });
+  },
+
   get(path)         { return this.call('GET',    path); },
   post(path, body)  { return this.call('POST',   path, body); },
   put(path, body)   { return this.call('PUT',    path, body); },
