@@ -182,7 +182,9 @@ const Folder = {
     }
   },
 
-  async delete(side, name) {
+  async delete(side, btn) {
+    const row = btn.closest('.folder-item, .file-row');
+    const name = row.querySelector('.name-text').textContent;
     Modal.confirm('Delete Item', `Are you sure you want to delete "${name}"? This cannot be undone.`, async () => {
       const filePath = this.currentPath[side] === '/'
         ? '/' + name
@@ -197,25 +199,13 @@ const Folder = {
     });
   },
 
-  async rename(side, oldName) {
-    // Find the row element
-    const listId = side === 'D' 
-      ? (this.pathStack[side].length > 0 ? 'dFileList' : 'dFolderList')
-      : (this.pathStack[side].length > 0 ? 'mFileList' : 'mFolderList');
+  async rename(side, btn) {
+    const row = btn.closest('.folder-item, .file-row');
+    const textNode = row.querySelector('.name-text');
+    if (!textNode) return;
     
-    const list = document.getElementById(listId);
-    const rows = list.querySelectorAll('.folder-item, .file-row');
-    let targetRow = null;
-    let nameEl = null;
-
-    rows.forEach(row => {
-      const textNode = row.querySelector('.name-text');
-      if (textNode && textNode.textContent === oldName) {
-        targetRow = row;
-        nameEl = textNode.closest('.fi-name, .fr-name');
-      }
-    });
-
+    const oldName = textNode.textContent;
+    const nameEl = textNode.closest('.fi-name, .fr-name');
     if (!nameEl) return;
 
     const isFile = nameEl.classList.contains('fr-name');
@@ -337,8 +327,8 @@ const Folder = {
       <span class="fi-meta">—</span>
       <span class="fi-arrow">›</span>
       <div class="fr-actions">
-        <button class="fr-btn"     onclick="event.stopPropagation();Folder.rename('${escAttr(side)}','${escAttr(f.name)}');">✎</button>
-        <button class="fr-btn del" onclick="event.stopPropagation();Folder.delete('${escAttr(side)}','${escAttr(f.name)}');">✕</button>
+        <button class="fr-btn"     onclick="event.stopPropagation();Folder.rename('${escAttr(side)}', this);">✎</button>
+        <button class="fr-btn del" onclick="event.stopPropagation();Folder.delete('${escAttr(side)}', this);">✕</button>
       </div>`;
     el.onclick = () => this.enter(side, f.name);
 
@@ -374,9 +364,9 @@ const Folder = {
       </div>
       <div class="fr-size">${f.size ? fmtSize(f.size) : ''}</div>
       <div class="fr-actions">
-        <button class="fr-btn" onclick="Folder.rename('${side}', '${escAttr(f.name)}'); event.stopPropagation();" title="Rename">✎</button>
+        <button class="fr-btn" onclick="Folder.rename('${side}', this); event.stopPropagation();" title="Rename">✎</button>
         <button class="fr-btn" onclick="Folder.download('${escAttr(f.name)}'); event.stopPropagation();" title="Download">↓</button>
-        <button class="fr-btn del" onclick="Folder.delete('${side}', '${escAttr(f.name)}'); event.stopPropagation();" title="Delete">✕</button>
+        <button class="fr-btn del" onclick="Folder.delete('${side}', this); event.stopPropagation();" title="Delete">✕</button>
       </div>`;
 
     row.onclick = () => Preview.open(f.name, fullPath);
