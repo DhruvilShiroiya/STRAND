@@ -357,10 +357,6 @@ const Folder = {
   },
 
   _fileRow(f, side, delay) {
-    const ext = f.ext || '—';
-    const el = document.createElement('div');
-    el.className = 'file-row';
-    el.style.animationDelay = (delay * 0.04) + 's';
     const ext = f.name.includes('.') ? f.name.split('.').pop().toLowerCase() : 'file';
     const row = document.createElement('div');
     row.className = 'file-row';
