@@ -379,7 +379,7 @@ const Folder = {
         <button class="fr-btn del" onclick="Folder.delete('${side}', '${escAttr(f.name)}'); event.stopPropagation();" title="Delete">✕</button>
       </div>`;
 
-    row.onclick = () => Preview.open(f, side);
+    row.onclick = () => Preview.open(f.name, fullPath);
     
     row.ondragstart = e => {
       e.dataTransfer.setData('text/plain', f.name);
@@ -413,6 +413,9 @@ const Folder = {
         el.onclick = () => {
           this.pathStack[side] = crumbs.slice(0, i).map(c => c.path);
           this.currentPath[side] = crumb.path;
+
+          // SAVE New state before loading
+          sessionStorage.setItem('strand_path_' + side, JSON.stringify({ path: this.currentPath[side], stack: this.pathStack[side] }));
           
           if (crumb.path === '/') {
             if (side === 'D') {
