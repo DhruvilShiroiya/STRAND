@@ -57,11 +57,11 @@
           <span>Folders</span>
           <span id="dFolderCount" style="color:var(--ink4);font-size:10px;font-family:'DM Mono',monospace;"></span>
         </div>
-        <div class="folder-header">
-        <div class="folder-title" id="dFolderTitle">My Files</div>
-        <button class="select-mode-toggle" id="selBtnD_Root" onclick="Folder.toggleSelectMode('D')">Select</button>
-      </div>
-      <div class="folder-meta" id="dFolderMeta">Loading…</div>
+        <div class="folder-header folder-pg-title">
+          <span id="dFolderTitle">My Files</span>
+          <button class="select-mode-toggle" id="selBtnD_Root" onclick="Folder.toggleSelectMode('D')">Select</button>
+        </div>
+        <div class="folder-pg-meta" id="dFolderMeta">Loading…</div>
         <div class="divider"></div>
         <div id="dFolderList">
           <div class="loading-row">Loading…</div>
@@ -79,11 +79,12 @@
             onclick="Folder.back('D')">← Back</span>
         </div>
         <div class="breadcrumb" id="dBreadcrumb"></div>
-        <div class="folder-header">
-        <div class="folder-title" id="dInnerTitle"></div>
-        <button class="select-mode-toggle" id="selBtnD_Inner" onclick="Folder.toggleSelectMode('D')">Select</button>
-      </div>
-      <div id="dInnerLabel" style="display:none;"></div>
+        <div class="folder-header folder-pg-title">
+          <span id="dInnerTitle"></span>
+          <button class="select-mode-toggle" id="selBtnD_Inner" onclick="Folder.toggleSelectMode('D')">Select</button>
+        </div>
+        <div class="folder-pg-meta" id="dInnerMeta"></div>
+        <div id="dInnerLabel" style="display:none;"></div>
         <div class="divider"></div>
         <div id="dFileList">
           <div class="loading-row">Loading…</div>
