@@ -217,21 +217,43 @@ const Folder = {
 
     if (!nameEl) return;
 
+    const isFile = nameEl.classList.contains('fr-name');
+    let baseName = oldName;
+    let extension = '';
+
+    if (isFile && oldName.includes('.')) {
+      const lastDot = oldName.lastIndexOf('.');
+      baseName = oldName.substring(0, lastDot);
+      extension = oldName.substring(lastDot); // includes the dot
+    }
+
     // Create inline input
     const input = document.createElement('input');
     input.type = 'text';
     input.className = 'inline-rename-input';
-    input.value = oldName;
+    input.value = baseName;
     
+    // Add extension label if it's a file
+    let extLabel = null;
+    if (extension) {
+      extLabel = document.createElement('span');
+      extLabel.className = 'inline-rename-ext';
+      extLabel.textContent = extension;
+    }
+
     const originalDisplay = nameEl.style.display;
     nameEl.style.display = 'none';
     nameEl.parentNode.insertBefore(input, nameEl);
+    if (extLabel) nameEl.parentNode.insertBefore(extLabel, nameEl);
+    
     input.focus();
     input.select();
 
     const save = async () => {
-      const newName = input.value.trim();
-      if (!newName || newName === oldName) {
+      const typedName = input.value.trim();
+      const newName = typedName + extension;
+      
+      if (!typedName || newName === oldName) {
         done();
         return;
       }
@@ -252,6 +274,7 @@ const Folder = {
 
     const done = () => {
       input.remove();
+      if (extLabel) extLabel.remove();
       nameEl.style.display = originalDisplay;
     };
 

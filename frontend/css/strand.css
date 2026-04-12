@@ -1558,3 +1558,11 @@ input[type="range"]::-moz-range-thumb {
   outline: none;
   min-width: 0;
 }
+
+.inline-rename-ext {
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--ink3);
+  margin-left: 1px;
+  user-select: none;
+}
