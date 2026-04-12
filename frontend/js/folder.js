@@ -250,7 +250,11 @@ const Folder = {
     input.focus();
     input.select();
 
+    let isSaving = false;
     const save = async () => {
+      if (isSaving) return;
+      isSaving = true;
+
       const typedName = input.value.trim();
       const newName = typedName + extension;
       
@@ -280,10 +284,16 @@ const Folder = {
     };
 
     input.onkeydown = e => {
-      if (e.key === 'Enter') save();
-      if (e.key === 'Escape') done();
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        save();
+      }
+      if (e.key === 'Escape') {
+        input.onblur = null; // Disable save-on-blur for escape
+        done();
+      }
     };
-    input.onblur = () => done(); 
+    input.onblur = () => save(); 
   },
 
   async _move(side, fileName, targetNameOrPath, isPath = false) {
