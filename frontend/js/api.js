@@ -47,6 +47,13 @@ const API = {
 
     const res  = await fetch(API_BASE + '/api' + path, opts);
     const data = await res.json();
+    
+    if (res.status === 401) {
+      Auth.clear();
+      window.location.href = '/';
+      return;
+    }
+
     if (!res.ok) throw new Error(data.error || 'Request failed');
     return data;
   },
