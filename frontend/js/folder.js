@@ -361,30 +361,36 @@ const Folder = {
     const el = document.createElement('div');
     el.className = 'file-row';
     el.style.animationDelay = (delay * 0.04) + 's';
-    el.draggable = true;
+    const ext = f.name.includes('.') ? f.name.split('.').pop().toLowerCase() : 'file';
+    const row = document.createElement('div');
+    row.className = 'file-row';
+    row.style.animationDelay = (delay * 0.05) + 's';
+    row.draggable = true;
 
-    const filePath = this.currentPath[side] === '/' ? '/' + f.name : this.currentPath[side] + '/' + f.name;
-    el.onclick = () => Preview.open(f.name, filePath);
-    
-    el.ondragstart = e => {
-      e.dataTransfer.setData('text/plain', f.name);
-      el.classList.add('dragging');
-    };
-    el.ondragend = () => el.classList.remove('dragging');
+    const fullPath = (this.currentPath[side] === '/' ? '/' : this.currentPath[side] + '/') + f.name;
+    const isNew = typeof Upload !== 'undefined' && Upload.recentUploads.has(fullPath);
 
-    el.innerHTML = `
-      <div class="file-ext-block">${escAttr(ext)}</div>
+    row.innerHTML = `
+      <div class="file-ext-block">${ext}</div>
       <div class="fr-info">
-        <div class="fr-name">${escAttr(f.name)}</div>
-        <div class="fr-meta">${timeAgo(f.modified)}</div>
+        <div class="fr-name">${escAttr(f.name)}${isNew ? '<span class="tag-new">New</span>' : ''}</div>
+        <div class="fr-meta">${f.mtime ? timeAgo(f.mtime) : ''}</div>
       </div>
-      <span class="fr-size">${f.size_fmt || '—'}</span>
+      <div class="fr-size">${f.size ? fmtSize(f.size) : ''}</div>
       <div class="fr-actions">
-        <button class="fr-btn"     onclick="event.stopPropagation();Folder.rename('${escAttr(side)}','${escAttr(f.name)}')">✎</button>
-        <button class="fr-btn"     onclick="event.stopPropagation();Folder.download('${escAttr(f.name)}')">↓</button>
-        <button class="fr-btn del" onclick="event.stopPropagation();Folder.delete('${escAttr(side)}','${escAttr(f.name)}')">✕</button>
+        <button class="fr-btn" onclick="Folder.rename('${side}', '${escAttr(f.name)}'); event.stopPropagation();" title="Rename">✎</button>
+        <button class="fr-btn" onclick="Folder.download('${escAttr(f.name)}'); event.stopPropagation();" title="Download">↓</button>
+        <button class="fr-btn del" onclick="Folder.delete('${side}', '${escAttr(f.name)}'); event.stopPropagation();" title="Delete">✕</button>
       </div>`;
-    return el;
+
+    row.onclick = () => Preview.open(f, side);
+    
+    row.ondragstart = e => {
+      e.dataTransfer.setData('text/plain', f.name);
+      row.classList.add('dragging');
+    };
+    row.ondragend = () => row.classList.remove('dragging');
+    return row;
   },
 
   _renderCrumbs(side) {

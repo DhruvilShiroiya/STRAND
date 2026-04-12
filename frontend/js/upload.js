@@ -1,6 +1,46 @@
 const Upload = {
-  activeControllers: new Map(), // batchId -> AbortController
+  activeControllers: new Map(),
   isUploading: false,
+  pickedPath: { D: '/', M: '/' },
+  recentUploads: new Set(),
+
+  openPicker(side) {
+    const list = document.getElementById('pickerList');
+    list.innerHTML = '<div class="loading-row">Scanning folders…</div>';
+    document.getElementById('pickerOverlay').classList.add('show');
+    
+    API.get('/files/list?path=/').then(data => {
+      list.innerHTML = '';
+      const folders = data.items.filter(i => i.isDir);
+      
+      const root = document.createElement('div');
+      root.className = 'picker-item';
+      root.textContent = '/ My Files';
+      root.onclick = () => this.selectFolder(side, '/', '/ My Files');
+      list.appendChild(root);
+
+      folders.forEach(f => {
+        const item = document.createElement('div');
+        item.className = 'picker-item';
+        item.textContent = '/' + f.name;
+        item.onclick = () => this.selectFolder(side, '/' + f.name, '/' + f.name);
+        list.appendChild(item);
+      });
+    }).catch(err => {
+      list.innerHTML = `<div class="empty-state">Error: ${err.message}</div>`;
+    });
+  },
+
+  selectFolder(side, path, label) {
+    this.pickedPath[side] = path;
+    const nameEl = document.getElementById('destName' + side);
+    if (nameEl) nameEl.textContent = label;
+    this.closePicker();
+  },
+
+  closePicker() {
+    document.getElementById('pickerOverlay').classList.remove('show');
+  },
 
   over(e, zoneId) {
     e.preventDefault();
@@ -34,7 +74,6 @@ const Upload = {
     const controller = new AbortController();
     this.activeControllers.set(batchId, controller);
 
-    // Refresh warning (browser level)
     const warn = (e) => { e.preventDefault(); e.returnValue = ''; };
     window.addEventListener('beforeunload', warn);
 
@@ -43,7 +82,6 @@ const Upload = {
     const wrapEl = document.getElementById(wrapId);
     wrapEl.style.display = 'block';
     
-    // UI Notice (Persistant line)
     if (!document.getElementById('notice' + side)) {
       const notice = document.createElement('div');
       notice.id = 'notice' + side;
@@ -54,7 +92,6 @@ const Upload = {
 
     const listEl = document.getElementById(listId);
 
-    // Build queue rows
     const items = [];
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -79,22 +116,23 @@ const Upload = {
       items.push({ uid, row });
     }
 
-    // Capture start time for ETA
     const startTime = Date.now();
 
-    const uploadPath = Folder.currentPath[side] === '/' ? '' : Folder.currentPath[side];
+    const targetPath = (this.pickedPath[side] && this.pickedPath[side] !== '/') 
+      ? this.pickedPath[side] 
+      : (Folder.currentPath[side] === '/' ? '' : Folder.currentPath[side]);
+
     const form = new FormData();
-    form.append('path', uploadPath);
+    form.append('path', targetPath);
     for (const file of files) form.append('files', file);
 
     try {
       await API.upload('/files/upload', form, (progress) => {
         const { percent, loaded, total } = progress;
         
-        // Calculate ETA
-        const elapsed = (Date.now() - startTime) / 1000; // seconds
-        const speed = loaded / elapsed; // bytes/sec
-        const remaining = (total - loaded) / speed; // seconds
+        const elapsed = (Date.now() - startTime) / 1000;
+        const speed = loaded / elapsed;
+        const remaining = (total - loaded) / speed;
         let etaText = '';
         if (remaining > 60) etaText = ` · ${Math.ceil(remaining / 60)}m left`;
         else if (remaining > 0) etaText = ` · ${Math.ceil(remaining)}s left`;
@@ -107,12 +145,15 @@ const Upload = {
         });
       }, controller.signal);
 
-      // Success
-      items.forEach(({ uid }) => {
+      items.forEach(({ uid, row }) => {
+        const fileName = row.querySelector('.q-name').textContent;
+        const fullPath = (targetPath === '' ? '/' : targetPath + '/') + fileName;
+        this.recentUploads.add(fullPath);
+
         const bar = document.getElementById('b_' + uid);
         const pct = document.getElementById('p_' + uid);
         const chk = document.getElementById('c_' + uid);
-        const thm = document.getElementById('th_' + uid);
+        const thm = document.getElementById(`th_${uid}`);
         if (bar) { bar.style.width = '100%'; bar.classList.add('done'); }
         if (pct) pct.textContent = 'Done';
         if (thm) thm.classList.add('done');

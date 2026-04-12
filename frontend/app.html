@@ -27,6 +27,10 @@
         <span>Upload</span>
         <span style="color:var(--ink4);font-size:10px;font-family:'DM Mono',monospace;">↑ files</span>
       </div>
+      <div class="upload-dest" id="destBtnD" onclick="Upload.openPicker('D')">
+        <span class="dest-label">Target Folder</span>
+        <span class="dest-name" id="destNameD">/ My Files</span>
+      </div>
       <div class="upload-zone" id="dropZoneD" onclick="document.getElementById('fileInD').click()"
         ondragover="Upload.over(event,'dropZoneD')" ondragleave="Upload.leave('dropZoneD')"
         ondrop="Upload.drop(event,'D')">
@@ -92,7 +96,11 @@
 
     <!-- MOBILE: UPLOAD PAGE -->
     <div class="mobile-page active" id="mob-upload">
-      <div class="upload-zone" style="margin:20px 20px 0;" id="dropZoneM"
+      <div class="upload-dest" style="margin:20px 20px 10px;" id="destBtnM" onclick="Upload.openPicker('M')">
+        <span class="dest-label">Target Folder</span>
+        <span class="dest-name" id="destNameM">/ My Files</span>
+      </div>
+      <div class="upload-zone" style="margin:0 20px 0;" id="dropZoneM"
         onclick="document.getElementById('fileInM').click()" ondragover="Upload.over(event,'dropZoneM')"
         ondragleave="Upload.leave('dropZoneM')" ondrop="Upload.drop(event,'M')">
         <span class="uz-arrow"></span>
@@ -208,6 +216,16 @@
     </div>
     <div class="search-body" id="searchBody">
       <div class="search-empty">Start typing to search</div>
+    </div>
+  </div>
+
+  <!-- FOLDER PICKER -->
+  <div class="overlay" id="pickerOverlay" onclick="if(event.target===this)Upload.closePicker()">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-label">Upload Destination</div>
+      <div class="sheet-title">Select folder</div>
+      <div class="picker-list" id="pickerList"></div>
     </div>
   </div>
 
