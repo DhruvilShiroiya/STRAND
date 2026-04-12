@@ -183,17 +183,18 @@ const Folder = {
   },
 
   async delete(side, name) {
-    if (!confirm(`Delete "${name}"?`)) return;
-    const filePath = this.currentPath[side] === '/'
-      ? '/' + name
-      : this.currentPath[side] + '/' + name;
-    try {
-      await API.del('/files/delete', { path: filePath });
-      Toast.show('Deleted');
-      this.refresh(side);
-    } catch (err) {
-      Toast.error(err.message);
-    }
+    Modal.confirm('Delete Item', `Are you sure you want to delete "${name}"? This cannot be undone.`, async () => {
+      const filePath = this.currentPath[side] === '/'
+        ? '/' + name
+        : this.currentPath[side] + '/' + name;
+      try {
+        await API.del('/files/delete', { path: filePath });
+        Toast.show('Deleted');
+        this.refresh(side);
+      } catch (err) {
+        Toast.error(err.message);
+      }
+    });
   },
 
   async rename(side, oldName) {

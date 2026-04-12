@@ -211,6 +211,18 @@
     </div>
   </div>
 
+  <!-- CUSTOM CONFIRM MODAL -->
+  <div class="overlay" id="confirmOverlay" onclick="if(event.target===this)Modal.close()">
+    <div class="confirm-box">
+      <div class="confirm-title" id="confirmTitle">Are you sure?</div>
+      <div class="confirm-text" id="confirmText">This action cannot be undone.</div>
+      <div class="confirm-actions">
+        <button class="confirm-btn-cancel" onclick="Modal.close()">Cancel</button>
+        <button class="confirm-btn-danger" id="confirmActionBtn">Delete</button>
+      </div>
+    </div>
+  </div>
+
   <!-- PREVIEW -->
   <div class="preview-overlay" id="previewOverlay" onclick="if(event.target===this)Preview.close()">
     <div class="preview-box">

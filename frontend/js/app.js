@@ -1,3 +1,21 @@
+// CUSTOM MODAL CONTROLLER
+const Modal = {
+  confirm(title, text, onConfirm) {
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmText').textContent = text;
+    document.getElementById('confirmOverlay').classList.add('show');
+    
+    const btn = document.getElementById('confirmActionBtn');
+    btn.onclick = () => {
+      onConfirm();
+      this.close();
+    };
+  },
+  close() {
+    document.getElementById('confirmOverlay').classList.remove('show');
+  }
+};
+
 // ══════════════════════════════
 // BOOT
 // ══════════════════════════════
