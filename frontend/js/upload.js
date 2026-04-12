@@ -5,40 +5,31 @@ const Upload = {
   pickerCurrentPath: '/',
   recentUploads: new Set(),
 
-  openPicker(side, path = '/') {
-    this.pickerCurrentPath = path;
+  openPicker(side) {
     const list = document.getElementById('pickerList');
     const title = document.getElementById('pickerTitle');
     const selectBtn = document.getElementById('pickerSelectBtn');
 
-    title.textContent = path === '/' ? 'My Files' : path.split('/').pop();
+    title.textContent = 'All Folders';
     list.innerHTML = '<div class="loading-row">Scanning…</div>';
     document.getElementById('pickerOverlay').classList.add('show');
     
-    API.get('/files/list?path=' + encodeURIComponent(path)).then(data => {
+    API.get('/files/folders').then(data => {
       list.innerHTML = '';
-      const folders = data.items.filter(i => i.isDir);
       
-      // Go Up Option
-      if (path !== '/') {
-        const up = document.createElement('div');
-        up.className = 'picker-item';
-        up.innerHTML = '<strong>..</strong> (Go up)';
-        const parentPath = path.substring(0, path.lastIndexOf('/')) || '/';
-        up.onclick = () => this.openPicker(side, parentPath);
-        list.appendChild(up);
-      }
-
-      folders.forEach(f => {
+      data.forEach(path => {
         const item = document.createElement('div');
         item.className = 'picker-item';
-        item.textContent = '📁 ' + f.name;
-        const subPath = path === '/' ? '/' + f.name : path + '/' + f.name;
-        item.onclick = () => this.openPicker(side, subPath);
+        item.textContent = path === '/' ? '/ My Files' : path;
+        item.onclick = () => {
+          this.selectFolder(side, path, path === '/' ? '/ My Files' : path);
+        };
         list.appendChild(item);
       });
       
-      selectBtn.onclick = () => this.selectFolder(side, path, path === '/' ? '/ My Files' : path);
+      // Select button is now less needed but can be used for root
+      selectBtn.onclick = () => this.selectFolder(side, '/', '/ My Files');
+      selectBtn.style.display = 'none'; // Simplify: just click the path
     }).catch(err => {
       list.innerHTML = `<div class="empty-state">Error: ${err.message}</div>`;
     });

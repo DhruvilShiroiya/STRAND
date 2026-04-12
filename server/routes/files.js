@@ -1,6 +1,20 @@
 const router = require('express').Router();
 const multer = require('multer');
 const path = require('path');
+
+// Helper to recursively walk folders
+function walkFolders(dir, base, results = []) {
+  const list = fs.readdirSync(dir, { withFileTypes: true });
+  for (const entry of list) {
+    if (entry.isDirectory() && entry.name !== '.DS_Store' && !entry.name.startsWith('._')) {
+      const fullPath = path.join(dir, entry.name);
+      const relPath = path.relative(base, fullPath);
+      results.push('/' + relPath.replace(/\\/g, '/'));
+      walkFolders(fullPath, base, results);
+    }
+  }
+  return results;
+}
 const fs = require('fs');
 const db = require('../db');
 const auth = require('../middleware/auth');
@@ -71,6 +85,25 @@ router.get('/list', auth, (req, res) => {
         warning: used > req.user.warn_mb
       }
     });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// ── GET /api/files/folders (Flat recursive list) ──
+router.get('/folders', auth, (req, res) => {
+  try {
+    const drivePath = getUserDrivePath(req.user);
+    const userRoot = safePath(drivePath, req.user.username, '');
+    ensureUserFolder(drivePath, req.user.username);
+    
+    const folders = walkFolders(userRoot, userRoot);
+    folders.sort((a, b) => a.localeCompare(b));
+    
+    // Always include root
+    folders.unshift('/');
+    
+    res.json(folders);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
