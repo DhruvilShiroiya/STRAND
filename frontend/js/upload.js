@@ -69,6 +69,7 @@ const Upload = {
   async handle(files, side) {
     if (!files.length) return;
 
+    this.recentUploads.clear(); // Clear old tags when a new upload starts
     this.isUploading = true;
     const batchId = 'b' + Date.now();
     const controller = new AbortController();
