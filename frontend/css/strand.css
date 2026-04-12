@@ -1542,3 +1542,19 @@ input[type="range"]::-moz-range-thumb {
   background: var(--line);
   color: var(--red);
 }
+
+/* ── INLINE RENAME ── */
+.inline-rename-input {
+  flex: 1;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 500;
+  background: var(--bg3);
+  color: var(--ink);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin: -3px -7px; /* Offset padding to align with original text */
+  outline: none;
+  min-width: 0;
+}

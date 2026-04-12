@@ -197,20 +197,69 @@ const Folder = {
   },
 
   async rename(side, oldName) {
-    const newName = prompt(`Rename "${oldName}" to:`, oldName);
-    if (!newName || newName === oldName) return;
+    // Find the row element
+    const listId = side === 'D' 
+      ? (this.pathStack[side].length > 0 ? 'dFileList' : 'dFolderList')
+      : (this.pathStack[side].length > 0 ? 'mFileList' : 'mFolderList');
+    
+    const list = document.getElementById(listId);
+    const rows = list.querySelectorAll('.folder-item, .file-row');
+    let targetRow = null;
+    let nameEl = null;
 
-    const base = this.currentPath[side] === '/' ? '/' : this.currentPath[side] + '/';
-    try {
-      await API.post('/files/rename', {
-        oldPath: base + oldName,
-        newPath: base + newName
-      });
-      Toast.show('Renamed');
-      this.refresh(side);
-    } catch (err) {
-      Toast.error(err.message);
-    }
+    rows.forEach(row => {
+      const n = row.querySelector('.fi-name, .fr-name');
+      if (n && n.textContent === oldName) {
+        targetRow = row;
+        nameEl = n;
+      }
+    });
+
+    if (!nameEl) return;
+
+    // Create inline input
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'inline-rename-input';
+    input.value = oldName;
+    
+    const originalDisplay = nameEl.style.display;
+    nameEl.style.display = 'none';
+    nameEl.parentNode.insertBefore(input, nameEl);
+    input.focus();
+    input.select();
+
+    const save = async () => {
+      const newName = input.value.trim();
+      if (!newName || newName === oldName) {
+        done();
+        return;
+      }
+
+      const base = this.currentPath[side] === '/' ? '/' : this.currentPath[side] + '/';
+      try {
+        await API.post('/files/rename', {
+          oldPath: base + oldName,
+          newPath: base + newName
+        });
+        Toast.show('Renamed');
+        this.refresh(side);
+      } catch (err) {
+        Toast.error(err.message);
+        done();
+      }
+    };
+
+    const done = () => {
+      input.remove();
+      nameEl.style.display = originalDisplay;
+    };
+
+    input.onkeydown = e => {
+      if (e.key === 'Enter') save();
+      if (e.key === 'Escape') done();
+    };
+    input.onblur = () => done(); 
   },
 
   async _move(side, fileName, targetFolder) {
