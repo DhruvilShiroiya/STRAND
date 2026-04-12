@@ -1743,3 +1743,104 @@ input[type="range"]::-moz-range-thumb {
 .picker-item:hover {
   background: var(--bg3);
 }
+
+/* ── BULK SELECTION ── */
+.row-select-wrap {
+  width: 24px;
+  height: 24px;
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.row-checkbox {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--line);
+  border-radius: 50%;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.file-row.selected .row-checkbox, 
+.folder-row.selected .row-checkbox {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.file-row.selected .row-checkbox::after,
+.folder-row.selected .row-checkbox::after {
+  content: "✓";
+  color: #fff;
+  font-size: 11px;
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.file-row.selected, .folder-row.selected {
+  background: rgba(var(--accent-rgb, 219, 102, 64), 0.05);
+}
+
+/* ── BULK ACTION BAR ── */
+.bulk-bar {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%) translateY(120%);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  padding: 12px 24px;
+  border-radius: 100px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  z-index: 900;
+  transition: transform 0.4s var(--ease-spring);
+}
+
+.bulk-bar.active {
+  transform: translateX(-50%) translateY(0);
+}
+
+.bulk-count {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink2);
+}
+
+.bulk-btn-del {
+  background: var(--red);
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 50px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bulk-btn-del:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(184, 48, 48, 0.4);
+}
+
+.bulk-btn-cancel {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--ink3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+}

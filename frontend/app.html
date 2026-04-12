@@ -253,6 +253,14 @@
     </div>
   </div>
 
+  <!-- BULK ACTIONS -->
+  <div class="bulk-bar" id="bulkBar">
+    <div class="bulk-count" id="bulkCount">0 ITEMS SELECTED</div>
+    <div style="height:12px;width:1.5px;background:var(--line2);"></div>
+    <button class="bulk-btn-cancel" onclick="Selection.clear()">Cancel</button>
+    <button class="bulk-btn-del" onclick="Selection.delete()">Delete selected</button>
+  </div>
+
   <!-- TOAST -->
   <div class="toast" id="toast"></div>
 

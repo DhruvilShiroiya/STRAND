@@ -4,14 +4,22 @@ const path = require('path');
 
 // Helper to recursively walk folders
 function walkFolders(dir, base, results = []) {
-  const list = fs.readdirSync(dir, { withFileTypes: true });
-  for (const entry of list) {
-    if (entry.isDirectory() && entry.name !== '.DS_Store' && !entry.name.startsWith('._')) {
-      const fullPath = path.join(dir, entry.name);
-      const relPath = path.relative(base, fullPath);
-      results.push('/' + relPath.replace(/\\/g, '/'));
-      walkFolders(fullPath, base, results);
+  try {
+    const list = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of list) {
+      try {
+        if (entry.isDirectory() && entry.name !== '.DS_Store' && !entry.name.startsWith('._')) {
+          const fullPath = path.join(dir, entry.name);
+          const relPath = path.relative(base, fullPath);
+          results.push('/' + relPath.replace(/\\/g, '/'));
+          walkFolders(fullPath, base, results);
+        }
+      } catch (e) {
+        console.warn(`[walkFolders] Skipping ${entry.name}: ${e.message}`);
+      }
     }
+  } catch (e) {
+    console.warn(`[walkFolders] Cannot read ${dir}: ${e.message}`);
   }
   return results;
 }
