@@ -1,63 +1,66 @@
-const Selection = {
-  items: new Set(), // Set of { path, side, name } objects or just full paths
-  
-  toggle(side, name, rowEl) {
-    const folder = Folder.currentPath[side];
-    const fullPath = folder === '/' ? '/' + name : folder + '/' + name;
-    
-    if (this.items.has(fullPath)) {
-      this.items.delete(fullPath);
-      rowEl.classList.remove('selected');
-    } else {
-      this.items.add(fullPath);
-      rowEl.classList.add('selected');
-    }
-    this.updateBar();
-  },
-
-  clear() {
-    this.items.clear();
-    document.querySelectorAll('.file-row.selected, .folder-row.selected').forEach(el => {
-      el.classList.remove('selected');
-    });
-    this.updateBar();
-  },
-
-  updateBar() {
-    const bar = document.getElementById('bulkBar');
-    const count = document.getElementById('bulkCount');
-    if (this.items.size > 0) {
-      count.textContent = `${this.items.size} ITEM${this.items.size > 1 ? 'S' : ''} SELECTED`;
-      bar.classList.add('active');
-    } else {
-      bar.classList.remove('active');
-    }
-  },
-
-  async delete() {
-    const count = this.items.size;
-    Modal.confirm('Delete Multiple', `Are you sure you want to delete ${count} selected item${count > 1 ? 's' : ''}?`, async () => {
-      try {
-        // We could do one API call if we update the backend, or iterate
-        // Let's iterate for now for safety, or update backend to accept array
-        for (const path of this.items) {
-          await API.del('/files/delete', { path });
-        }
-        Toast.show(`Deleted ${count} items`);
-        this.clear();
-        Folder.refresh('D');
-        Folder.refresh('M');
-      } catch (err) {
-        Toast.error(err.message);
-      }
-    });
-  }
-};
-
 const Folder = {
   currentPath: { D: '/', M: '/' },
   pathStack: { D: [], M: [] },
   allFiles: [],
+  selectMode: false,
+  selectedPaths: new Set(),
+
+  toggleSelectMode(side) {
+    this.selectMode = !this.selectMode;
+    this.selectedPaths.clear();
+    this.updateSelectionBar();
+    
+    // Toggle button UI
+    const btns = document.querySelectorAll('.select-mode-toggle');
+    btns.forEach(b => {
+      b.classList.toggle('active', this.selectMode);
+      b.textContent = this.selectMode ? 'Done' : 'Select';
+    });
+    
+    // Refresh views to show checkboxes
+    this.refresh('D');
+    this.refresh('M');
+  },
+
+  toggleSelection(side, f) {
+    const fullPath = (this.currentPath[side] === '/' ? '/' : this.currentPath[side] + '/') + f.name;
+    if (this.selectedPaths.has(fullPath)) {
+      this.selectedPaths.delete(fullPath);
+    } else {
+      this.selectedPaths.add(fullPath);
+    }
+    this.updateSelectionBar();
+    this.refresh(side);
+  },
+
+  updateSelectionBar() {
+    const bar = document.getElementById('selectionBar');
+    const count = document.getElementById('selectionCount');
+    if (this.selectMode && this.selectedPaths.size > 0) {
+      bar.classList.add('show');
+      count.textContent = `${this.selectedPaths.size} item${this.selectedPaths.size === 1 ? '' : 's'} selected`;
+    } else {
+      bar.classList.remove('show');
+    }
+  },
+
+  async deleteSelected() {
+    if (this.selectedPaths.size === 0) return;
+    
+    Modal.confirm('Delete Multiple Items', `Are you sure you want to delete ${this.selectedPaths.size} items? This cannot be undone.`, async () => {
+      try {
+        await API.del('/files/delete', { paths: Array.from(this.selectedPaths) });
+        Toast.show(`Deleted ${this.selectedPaths.size} items`);
+        this.selectMode = false;
+        this.selectedPaths.clear();
+        this.updateSelectionBar();
+        this.refresh('D');
+        this.refresh('M');
+      } catch (err) {
+        Toast.error(err.message);
+      }
+    });
+  },
 
   // ── Load root view ──
   async loadRoot(side) {
@@ -231,7 +234,6 @@ const Folder = {
   },
 
   refresh(side) {
-    Selection.clear();
     if (this.pathStack[side].length > 0) {
       this.loadInner(side, this.currentPath[side]);
     } else {
@@ -389,14 +391,7 @@ const Folder = {
     const el = document.createElement('div');
     el.className = 'folder-item';
     el.style.animationDelay = (delay * 0.04) + 's';
-
-    const fullPath = (this.currentPath[side] === '/' ? '/' : this.currentPath[side] + '/') + f.name;
-    if (Selection.items.has(fullPath)) el.classList.add('selected');
-
     el.innerHTML = `
-      <div class="row-select-wrap" onclick="Selection.toggle('${side}', '${escAttr(f.name)}', this.parentNode); event.stopPropagation();">
-        <div class="row-checkbox"></div>
-      </div>
       <span class="fi-name">${escAttr(f.name)}</span>
       <span class="fi-meta">—</span>
       <span class="fi-arrow">›</span>
@@ -404,7 +399,15 @@ const Folder = {
         <button class="fr-btn"     onclick="event.stopPropagation();Folder.rename('${escAttr(side)}','${escAttr(f.name)}');">✎</button>
         <button class="fr-btn del" onclick="event.stopPropagation();Folder.delete('${escAttr(side)}','${escAttr(f.name)}');">✕</button>
       </div>`;
-    el.onclick = () => this.enter(side, f.name);
+
+    const fullPath = (this.currentPath[side] === '/' ? '/' : this.currentPath[side] + '/') + f.name;
+    if (this.selectMode) {
+      el.classList.add('selecting');
+      if (this.selectedPaths.has(fullPath)) el.classList.add('selected');
+      el.onclick = () => this.toggleSelection(side, f);
+    } else {
+      el.onclick = () => this.enter(side, f.name);
+    }
 
     // Drop target logic
     el.ondragover = e => { e.preventDefault(); el.classList.add('drag-target'); };
@@ -429,12 +432,8 @@ const Folder = {
 
     const fullPath = (this.currentPath[side] === '/' ? '/' : this.currentPath[side] + '/') + f.name;
     const isNew = typeof Upload !== 'undefined' && Upload.recentUploads.has(fullPath);
-    if (Selection.items.has(fullPath)) row.classList.add('selected');
 
     row.innerHTML = `
-      <div class="row-select-wrap" onclick="Selection.toggle('${side}', '${escAttr(f.name)}', this.parentNode); event.stopPropagation();">
-        <div class="row-checkbox"></div>
-      </div>
       <div class="file-ext-block">${ext}</div>
       <div class="fr-info">
         <div class="fr-name">${escAttr(f.name)}${isNew ? '<span class="tag-new">New</span>' : ''}</div>
@@ -447,7 +446,13 @@ const Folder = {
         <button class="fr-btn del" onclick="Folder.delete('${side}', '${escAttr(f.name)}'); event.stopPropagation();" title="Delete">✕</button>
       </div>`;
 
-    row.onclick = () => Preview.open(f.name, fullPath);
+    if (this.selectMode) {
+      row.classList.add('selecting');
+      if (this.selectedPaths.has(fullPath)) row.classList.add('selected');
+      row.onclick = () => this.toggleSelection(side, f);
+    } else {
+      row.onclick = () => Preview.open(f.name, fullPath);
+    }
     
     row.ondragstart = e => {
       e.dataTransfer.setData('text/plain', f.name);

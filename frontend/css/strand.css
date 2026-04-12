@@ -1844,3 +1844,167 @@ input[type="range"]::-moz-range-thumb {
   cursor: pointer;
   letter-spacing: 0.05em;
 }
+
+/* ── BATCH SELECTION ── */
+.folder-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.select-mode-toggle {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.select-mode-toggle:hover {
+  background: rgba(184, 151, 108, 0.1);
+}
+
+.select-mode-toggle.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.selection-bar {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  padding: 12px 20px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  z-index: 900;
+  transition: transform 0.4s var(--ease-spring), opacity 0.3s;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.selection-bar.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.selection-count {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--ink);
+}
+
+.selection-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.selection-actions button {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.sel-btn-cancel {
+  background: var(--bg3);
+  color: var(--ink2);
+}
+
+.sel-btn-delete {
+  background: var(--red);
+  color: #fff;
+}
+
+/* Row changes in Selection Mode */
+.file-row.selecting {
+  padding-left: 48px;
+  position: relative;
+}
+
+.file-row.selecting::before {
+  content: '';
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--line);
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.file-row.selected::before {
+  background: var(--accent);
+  border-color: var(--accent);
+  content: '✓';
+  color: #fff;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-row.selected {
+  background: rgba(184, 151, 108, 0.05);
+}
+
+/* Hide actions and meta in selection mode */
+.file-row.selecting .fr-actions,
+.file-row.selecting .fr-size,
+.folder-item.selecting .fr-actions,
+.folder-item.selecting .fi-arrow {
+  display: none !important;
+}
+
+.folder-item.selecting {
+  padding-left: 48px;
+  position: relative;
+}
+
+.folder-item.selecting::before {
+  content: '';
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--line);
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.folder-item.selected::before {
+  background: var(--accent);
+  border-color: var(--accent);
+  content: '✓';
+  color: #fff;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.folder-item.selected {
+  background: rgba(184, 151, 108, 0.05);
+}

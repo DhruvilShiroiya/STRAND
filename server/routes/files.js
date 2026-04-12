@@ -263,25 +263,28 @@ router.post('/mkdir', auth, (req, res) => {
 router.delete('/delete', auth, (req, res) => {
   try {
     const drivePath = getUserDrivePath(req.user);
-    const filePath = req.body.path ?? req.query.path ?? '';
-    const targetPath = safePath(drivePath, req.user.username, filePath);
+    const paths = req.body.paths || [req.body.path ?? req.query.path ?? ''];
+    
+    console.log('[delete] processing:', paths.length, 'items');
 
-    console.log('[delete] targetPath :', targetPath);
+    for (const filePath of paths) {
+      if (!filePath) continue;
+      const targetPath = safePath(drivePath, req.user.username, filePath);
+      
+      if (!fs.existsSync(targetPath)) continue;
 
-    if (!fs.existsSync(targetPath)) {
-      return res.status(404).json({ error: 'File or folder not found' });
-    }
-
-    const stat = fs.statSync(targetPath);
-    if (stat.isDirectory()) {
-      fs.rmSync(targetPath, { recursive: true, force: true });
-    } else {
-      fs.unlinkSync(targetPath);
+      const stat = fs.statSync(targetPath);
+      if (stat.isDirectory()) {
+        fs.rmSync(targetPath, { recursive: true, force: true });
+      } else {
+        fs.unlinkSync(targetPath);
+      }
     }
 
     const newUsage = recalculate(req.user, drivePath);
     res.json({
       message: 'Deleted successfully',
+      count: paths.length,
       usage: { used_mb: newUsage, quota_mb: req.user.quota_mb }
     });
   } catch (err) {
