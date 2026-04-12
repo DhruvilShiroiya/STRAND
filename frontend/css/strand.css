@@ -506,18 +506,19 @@ body {
   background: var(--green);
   border-color: var(--green);
   transform: scale(1.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .q-check.done::after {
   content: '';
-  position: absolute;
-  top: 4px;
-  left: 3px;
   width: 5px;
   height: 8px;
-  border-right: 1.5px solid var(--bg);
-  border-bottom: 1.5px solid var(--bg);
-  transform: rotate(45deg);
+  border-right: 2px solid var(--bg);
+  border-bottom: 2px solid var(--bg);
+  transform: rotate(45deg) translate(-1px, -1px);
+  display: block;
 }
 
 /* ── FOLDER / FILE LIST ── */
