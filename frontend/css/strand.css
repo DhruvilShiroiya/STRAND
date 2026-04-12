@@ -1588,3 +1588,13 @@ input[type="range"]::-moz-range-thumb {
 .upload-notice span {
   font-size: 14px;
 }
+
+/* ── BREADCRUMB DRAG ── */
+.bc.bc-drag-over {
+  color: var(--accent) !important;
+  background: var(--bg3);
+  padding: 2px 6px;
+  margin: -2px -6px;
+  border-radius: 4px;
+  transform: scale(1.1);
+}

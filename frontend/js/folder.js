@@ -285,14 +285,20 @@ const Folder = {
     input.onblur = () => done(); 
   },
 
-  async _move(side, fileName, targetFolder) {
+  async _move(side, fileName, targetNameOrPath, isPath = false) {
     const base = this.currentPath[side] === '/' ? '/' : this.currentPath[side] + '/';
     const oldPath = base + fileName;
-    const newPath = base + targetFolder + '/' + fileName;
+    
+    let newPath;
+    if (isPath) {
+      newPath = targetNameOrPath === '/' ? '/' + fileName : targetNameOrPath + '/' + fileName;
+    } else {
+      newPath = base + targetNameOrPath + '/' + fileName;
+    }
 
     try {
       await API.post('/files/rename', { oldPath, newPath });
-      Toast.show(`Moved to ${targetFolder}`);
+      Toast.show(`Moved ${fileName}`);
       this.refresh(side);
     } catch (err) {
       Toast.error(err.message);
@@ -375,24 +381,45 @@ const Folder = {
     const bc = document.getElementById(elId);
     bc.innerHTML = '';
 
-    const segs = ['My Files',
-      ...this.pathStack[side]
-        .filter(p => p !== '/')
-        .map(p => p.split('/').pop()),
-      this.currentPath[side].split('/').pop()
-    ].filter(Boolean);
+    const pathParts = this.currentPath[side].split('/').filter(Boolean);
+    const crumbs = [
+      { label: 'My Files', path: '/' },
+      ...pathParts.map((part, i) => ({
+        label: part,
+        path: '/' + pathParts.slice(0, i + 1).join('/')
+      }))
+    ];
 
-    segs.forEach((seg, i) => {
-      const last = i === segs.length - 1;
+    crumbs.forEach((crumb, i) => {
+      const last = i === crumbs.length - 1;
       const el = document.createElement('span');
       el.className = 'bc' + (last ? ' current' : '');
-      el.textContent = seg;
+      el.textContent = crumb.label;
+
       if (!last) {
         el.onclick = () => {
-          const stepsBack = segs.length - 1 - i;
-          for (let j = 0; j < stepsBack; j++) this.back(side);
+          this.pathStack[side] = crumbs.slice(0, i).map(c => c.path);
+          this.currentPath[side] = crumb.path;
+          if (crumb.path === '/') this.loadRoot(side);
+          else this.loadInner(side, crumb.path);
+        };
+
+        // Breadcrumb Drop Target
+        el.ondragover = e => { 
+          e.preventDefault(); 
+          el.classList.add('bc-drag-over'); 
+        };
+        el.ondragleave = () => el.classList.remove('bc-drag-over');
+        el.ondrop = e => {
+          e.preventDefault();
+          el.classList.remove('bc-drag-over');
+          const fileName = e.dataTransfer.getData('text/plain');
+          if (fileName) {
+            this._move(side, fileName, crumb.path, true);
+          }
         };
       }
+
       bc.appendChild(el);
       if (!last) {
         const sep = document.createElement('span');
